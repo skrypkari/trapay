@@ -2,18 +2,18 @@ import React, { useState } from 'react';
 import {
   Search,
   Filter,
-  Calendar,
   ArrowUpDown,
   Eye,
-  MoreHorizontal,
   CheckCircle2,
   XCircle,
   Clock,
-  Download,
-  DollarSign,
-  TrendingUp,
-  ArrowUpRight,
   AlertTriangle,
+  Copy,
+  Check,
+  Plus,
+  Lock,
+  Mail,
+  Calendar,
   Link2,
   RefreshCw,
   ChevronDown,
@@ -23,8 +23,7 @@ import {
   BarChart2,
   Users,
   Globe,
-  Copy,
-  Check
+  MoreHorizontal
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import DatePicker from '../components/DatePicker';
@@ -36,13 +35,16 @@ interface PaymentLink {
   description: string;
   amount: number | null;
   currency: string;
+  visibility: 'public' | 'private';
+  expiryDate: Date | null;
+  redirectUrl: string | null;
+  emailNotification: boolean;
+  allowReuse: boolean;
+  showDescription: boolean;
   createdAt: Date;
-  status: 'active' | 'paused' | 'expired';
-  clicks: number;
-  payments: number;
-  conversionRate: number;
-  totalRevenue: number;
-  url: string;
+  status: 'active' | 'expired' | 'disabled';
+  type: 'single' | 'multi' | 'subscription' | 'donation';
+  usageCount: number;
 }
 
 const sampleLinks: PaymentLink[] = [
@@ -52,43 +54,295 @@ const sampleLinks: PaymentLink[] = [
     description: 'Monthly subscription for premium features',
     amount: 29.99,
     currency: 'USD',
+    visibility: 'public',
+    expiryDate: null,
+    redirectUrl: 'https://pay.example.com/premium-subscription',
+    emailNotification: true,
+    allowReuse: true,
+    showDescription: true,
     createdAt: new Date('2024-03-15'),
     status: 'active',
-    clicks: 1250,
-    payments: 450,
-    conversionRate: 36,
-    totalRevenue: 13495.50,
-    url: 'https://pay.example.com/premium-subscription'
+    type: 'subscription',
+    usageCount: 12
   },
   {
     id: 'pl_2',
     title: 'One-time Donation',
-    description: 'Support our cause with a donation',
+    description: 'Support our cause',
     amount: null,
     currency: 'USD',
-    createdAt: new Date('2024-03-10'),
-    status: 'active',
-    clicks: 3200,
-    payments: 890,
-    conversionRate: 27.8,
-    totalRevenue: 25678.90,
-    url: 'https://pay.example.com/donate'
-  },
-  {
-    id: 'pl_3',
-    title: 'Event Registration',
-    description: 'Annual conference ticket',
-    amount: 199.99,
-    currency: 'USD',
+    visibility: 'public',
+    expiryDate: null,
+    redirectUrl: null,
+    emailNotification: true,
+    allowReuse: true,
+    showDescription: true,
     createdAt: new Date('2024-03-05'),
-    status: 'paused',
-    clicks: 800,
-    payments: 120,
-    conversionRate: 15,
-    totalRevenue: 23998.80,
-    url: 'https://pay.example.com/conference-2024'
+    status: 'active',
+    type: 'donation',
+    usageCount: 8
   }
 ];
+
+const CreateLinkModal: React.FC<{
+  isOpen: boolean;
+  onClose: () => void;
+}> = ({ isOpen, onClose }) => {
+  const [name, setName] = useState('');
+  const [description, setDescription] = useState('');
+  const [amount, setAmount] = useState<string>('');
+  const [currency, setCurrency] = useState('USD');
+  const [visibility, setVisibility] = useState<'public' | 'private'>('public');
+  const [expiryDate, setExpiryDate] = useState<Date | null>(null);
+  const [redirectUrl, setRedirectUrl] = useState('');
+  const [emailNotification, setEmailNotification] = useState(true);
+  const [allowReuse, setAllowReuse] = useState(true);
+  const [showDescription, setShowDescription] = useState(true);
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+  const [linkType, setLinkType] = useState<'single' | 'multi' | 'subscription' | 'donation'>('single');
+
+  const currencyOptions = [
+    { value: 'USD', label: 'USD' },
+    { value: 'EUR', label: 'EUR' },
+    { value: 'GBP', label: 'GBP' }
+  ];
+
+  const linkTypeOptions = [
+    { value: 'single', label: 'Single-use', icon: <Link2 className="h-4 w-4" /> },
+    { value: 'multi', label: 'Multi-use', icon: <RefreshCw className="h-4 w-4" /> },
+    { value: 'subscription', label: 'Subscription', icon: <Calendar className="h-4 w-4" /> },
+    { value: 'donation', label: 'Donation', icon: <Mail className="h-4 w-4" /> }
+  ];
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onClose();
+  };
+
+  return (
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) onClose();
+          }}
+        >
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.95, opacity: 0 }}
+            className="bg-white rounded-xl shadow-xl w-full max-w-2xl my-8"
+          >
+            <div className="px-6 py-4 border-b rounded-t-xl border-gray-200 bg-white z-10">
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold text-gray-900">Create Payment Link</h3>
+                <button
+                  onClick={onClose}
+                  className="text-gray-400 hover:text-gray-500 p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <XCircle className="h-5 w-5" />
+                </button>
+              </div>
+            </div>
+
+            <form onSubmit={handleSubmit} className="p-6 space-y-6">
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Link Type
+                  </label>
+                  <CustomSelect
+                    value={linkType}
+                    onChange={(value) => setLinkType(value as typeof linkType)}
+                    options={linkTypeOptions}
+                    placeholder="Select link type"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Name
+                  </label>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                    placeholder="e.g., Premium Subscription"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Description
+                  </label>
+                  <textarea
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    rows={3}
+                    className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                    placeholder="Describe what this payment is for"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Amount
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        value={amount}
+                        onChange={(e) => setAmount(e.target.value)}
+                        className="w-full pl-4 pr-20 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                        placeholder="0.00"
+                        step="0.01"
+                        disabled={linkType === 'donation'}
+                      />
+                      <div className="absolute inset-y-0 right-0 flex items-center">
+                        <CustomSelect
+                          value={currency}
+                          onChange={setCurrency}
+                          options={currencyOptions}
+                          placeholder="Currency"
+                          className="w-20"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Visibility
+                    </label>
+                    <div className="flex space-x-4">
+                      <label className="flex items-center space-x-2">
+                        <input
+                          type="radio"
+                          checked={visibility === 'public'}
+                          onChange={() => setVisibility('public')}
+                          className="h-4 w-4 text-primary focus:ring-primary border-gray-300"
+                        />
+                        <span className="text-sm text-gray-600">Public</span>
+                      </label>
+                      <label className="flex items-center space-x-2">
+                        <input
+                          type="radio"
+                          checked={visibility === 'private'}
+                          onChange={() => setVisibility('private')}
+                          className="h-4 w-4 text-primary focus:ring-primary border-gray-300"
+                        />
+                        <span className="text-sm text-gray-600">Private</span>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Expiry Date (Optional)
+                  </label>
+                  <div className="relative">
+                    <button
+                      type="button"
+                      onClick={() => setIsDatePickerOpen(true)}
+                      className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg text-left flex items-center space-x-3 hover:border-primary transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary/20"
+                    >
+                      <Calendar className="h-4 w-4 text-gray-400" />
+                      <span className={expiryDate ? 'text-gray-900' : 'text-gray-500'}>
+                        {expiryDate ? expiryDate.toLocaleDateString() : 'Select date'}
+                      </span>
+                    </button>
+                    <AnimatePresence>
+                      {isDatePickerOpen && (
+                        <DatePicker
+                          value={expiryDate}
+                          onChange={(date) => {
+                            setExpiryDate(date);
+                            setIsDatePickerOpen(false);
+                          }}
+                          onClose={() => setIsDatePickerOpen(false)}
+                        />
+                      )}
+                    </AnimatePresence>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Redirect URL (Optional)
+                  </label>
+                  <input
+                    type="url"
+                    value={redirectUrl}
+                    onChange={(e) => setRedirectUrl(e.target.value)}
+                    className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                    placeholder="https://example.com/thank-you"
+                  />
+                </div>
+
+                <div className="space-y-4">
+                  <label className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={emailNotification}
+                      onChange={(e) => setEmailNotification(e.target.checked)}
+                      className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                    />
+                    <span className="text-sm text-gray-600">Enable email notifications</span>
+                  </label>
+
+                  <label className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={allowReuse}
+                      onChange={(e) => setAllowReuse(e.target.checked)}
+                      className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                      disabled={linkType === 'single'}
+                    />
+                    <span className="text-sm text-gray-600">Allow multiple payments</span>
+                  </label>
+
+                  <label className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      checked={showDescription}
+                      onChange={(e) => setShowDescription(e.target.checked)}
+                      className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+                    />
+                    <span className="text-sm text-gray-600">Show description on payment page</span>
+                  </label>
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-3 sticky bottom-0 bg-white py-4 border-t border-gray-200 mt-6">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-800"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark"
+                >
+                  Create Link
+                </button>
+              </div>
+            </form>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+};
 
 const LinkPreviewModal: React.FC<{
   link: PaymentLink;
@@ -99,7 +353,7 @@ const LinkPreviewModal: React.FC<{
   const handleCopy = () => {
     navigator.clipboard.writeText(link.url);
     setShowCopied(true);
-    setTimeout(() => setShowCopied(false), 2000);
+    setTimeout(() => setShowCopied(null), 2000);
   };
 
   return (
@@ -167,24 +421,26 @@ const LinkPreviewModal: React.FC<{
 
               <div className="p-4 bg-gray-50 rounded-xl">
                 <div className="text-sm font-medium text-gray-500 mb-1">Status</div>
-                {link.status === 'active' && (
-                  <div className="flex items-center space-x-2 text-green-600 bg-green-50 px-3 py-1 rounded-lg w-fit">
-                    <CheckCircle2 className="h-4 w-4" />
-                    <span className="text-sm font-medium capitalize">Active</span>
-                  </div>
-                )}
-                {link.status === 'paused' && (
-                  <div className="flex items-center space-x-2 text-yellow-600 bg-yellow-50 px-3 py-1 rounded-lg w-fit">
-                    <Clock className="h-4 w-4" />
-                    <span className="text-sm font-medium capitalize">Paused</span>
-                  </div>
-                )}
-                {link.status === 'expired' && (
-                  <div className="flex items-center space-x-2 text-red-600 bg-red-50 px-3 py-1 rounded-lg w-fit">
-                    <AlertTriangle className="h-4 w-4" />
-                    <span className="text-sm font-medium capitalize">Expired</span>
-                  </div>
-                )}
+                <div className="mt-1">
+                  {link.status === 'active' && (
+                    <div className="flex items-center space-x-2 text-green-600 bg-green-50 px-3 py-1 rounded-lg w-fit">
+                      <CheckCircle2 className="h-4 w-4" />
+                      <span className="text-sm font-medium capitalize">Active</span>
+                    </div>
+                  )}
+                  {link.status === 'expired' && (
+                    <div className="flex items-center space-x-2 text-yellow-600 bg-yellow-50 px-3 py-1 rounded-lg w-fit">
+                      <AlertTriangle className="h-4 w-4" />
+                      <span className="text-sm font-medium capitalize">Expired</span>
+                    </div>
+                  )}
+                  {link.status === 'disabled' && (
+                    <div className="flex items-center space-x-2 text-red-600 bg-red-50 px-3 py-1 rounded-lg w-fit">
+                      <XCircle className="h-4 w-4" />
+                      <span className="text-sm font-medium capitalize">Disabled</span>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -264,92 +520,49 @@ const LinkPreviewModal: React.FC<{
 };
 
 const AdminPaymentLinks: React.FC = () => {
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
-  const [selectedLink, setSelectedLink] = useState<PaymentLink | null>(null);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [typeFilter, setTypeFilter] = useState('all');
+  const [showCopied, setShowCopied] = useState<string | null>(null);
 
   const statusOptions = [
     { value: 'all', label: 'All Status' },
     { value: 'active', label: 'Active', icon: <CheckCircle2 className="h-4 w-4 text-green-600" /> },
-    { value: 'paused', label: 'Paused', icon: <Clock className="h-4 w-4 text-yellow-600" /> },
-    { value: 'expired', label: 'Expired', icon: <AlertTriangle className="h-4 w-4 text-red-600" /> }
+    { value: 'expired', label: 'Expired', icon: <AlertTriangle className="h-4 w-4 text-yellow-600" /> },
+    { value: 'disabled', label: 'Disabled', icon: <XCircle className="h-4 w-4 text-red-600" /> }
   ];
 
+  const typeOptions = [
+    { value: 'all', label: 'All Types' },
+    { value: 'single', label: 'Single-use', icon: <Link2 className="h-4 w-4" /> },
+    { value: 'multi', label: 'Multi-use', icon: <RefreshCw className="h-4 w-4" /> },
+    { value: 'subscription', label: 'Subscription', icon: <Calendar className="h-4 w-4" /> },
+    { value: 'donation', label: 'Donation', icon: <Mail className="h-4 w-4" /> }
+  ];
+
+  const handleCopyLink = (id: string) => {
+    navigator.clipboard.writeText(`https://pay.example.com/${id}`);
+    setShowCopied(id);
+    setTimeout(() => setShowCopied(null), 2000);
+  };
+
   return (
-    <div className="p-4 md:p-6 space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-xl md:text-2xl font-semibold text-gray-900">Payment Links</h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Manage and monitor user-generated payment links
-          </p>
-        </div>
-        <button className="inline-flex items-center px-4 py-2 bg-primary text-white rounded-xl shadow-lg shadow-primary/20 hover:shadow-xl hover:shadow-primary/30 transition-all duration-200">
-          <Download className="h-4 w-4 mr-2" />
-          Export
+    <div className="p-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold text-gray-900">Payment Links</h1>
+        <button
+          onClick={() => setIsCreateModalOpen(true)}
+          className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark flex items-center space-x-2"
+        >
+          <Plus className="h-4 w-4" />
+          <span>Create Link</span>
         </button>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl shadow-sm p-4 md:p-6 border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div className="p-2 bg-primary/10 rounded-lg">
-              <DollarSign className="h-5 w-5 text-primary" />
-            </div>
-            <span className="text-sm font-medium text-green-600">+12.5%</span>
-          </div>
-          <div className="mt-4">
-            <h3 className="text-2xl font-semibold text-gray-900">$45,231</h3>
-            <p className="text-sm text-gray-500 mt-1">Total Revenue</p>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-sm p-4 md:p-6 border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div className="p-2 bg-blue-50 rounded-lg">
-              <Globe className="h-5 w-5 text-blue-600" />
-            </div>
-            <span className="text-sm font-medium text-green-600">+8.2%</span>
-          </div>
-          <div className="mt-4">
-            <h3 className="text-2xl font-semibold text-gray-900">12,345</h3>
-            <p className="text-sm text-gray-500 mt-1">Total Clicks</p>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-sm p-4 md:p-6 border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div className="p-2 bg-green-50 rounded-lg">
-              <TrendingUp className="h-5 w-5 text-green-600" />
-            </div>
-            <span className="text-sm font-medium text-green-600">+5.3%</span>
-          </div>
-          <div className="mt-4">
-            <h3 className="text-2xl font-semibold text-gray-900">32.5%</h3>
-            <p className="text-sm text-gray-500 mt-1">Conversion Rate</p>
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl shadow-sm p-4 md:p-6 border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div className="p-2 bg-purple-50 rounded-lg">
-              <Users className="h-5 w-5 text-purple-600" />
-            </div>
-            <span className="text-sm font-medium text-green-600">+3.7%</span>
-          </div>
-          <div className="mt-4">
-            <h3 className="text-2xl font-semibold text-gray-900">4,567</h3>
-            <p className="text-sm text-gray-500 mt-1">Unique Visitors</p>
-          </div>
-        </div>
-      </div>
-
-      {/* Links Table */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200">
-        <div className="p-4 md:p-6 border-b border-gray-200">
-          <div className="flex flex-col lg:flex-row gap-4">
+        <div className="p-6 border-b border-gray-100">
+          <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -358,117 +571,99 @@ const AdminPaymentLinks: React.FC = () => {
                   placeholder="Search payment links..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-primary/20 focus:bg-white transition-all duration-200"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg"
                 />
               </div>
             </div>
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex gap-4">
               <CustomSelect
                 value={statusFilter}
                 onChange={setStatusFilter}
                 options={statusOptions}
                 placeholder="Filter by status"
-                className="w-full sm:w-[180px]"
+              />
+              <CustomSelect
+                value={typeFilter}
+                onChange={setTypeFilter}
+                options={typeOptions}
+                placeholder="Filter by type"
               />
             </div>
           </div>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[800px]">
+          <table className="w-full">
             <thead>
-              <tr className="border-b border-gray-200">
-                <th className="text-left px-6 py-4">
-                  <button className="flex items-center space-x-2 text-sm font-medium text-gray-500">
-                    <span>Title</span>
-                    <ArrowUpDown className="h-4 w-4" />
-                  </button>
-                </th>
-                <th className="text-left px-6 py-4">
-                  <button className="flex items-center space-x-2 text-sm font-medium text-gray-500">
-                    <span>Created</span>
-                    <ArrowUpDown className="h-4 w-4" />
-                  </button>
-                </th>
-                <th className="text-left px-6 py-4">
-                  <button className="flex items-center space-x-2 text-sm font-medium text-gray-500">
-                    <span>Amount</span>
-                    <ArrowUpDown className="h-4 w-4" />
-                  </button>
-                </th>
-                <th className="text-left px-6 py-4">
-                  <span className="text-sm font-medium text-gray-500">Performance</span>
-                </th>
-                <th className="text-left px-6 py-4">
-                  <span className="text-sm font-medium text-gray-500">Status</span>
-                </th>
-                <th className="text-right px-6 py-4"></th>
+              <tr className="border-b border-gray-100">
+                <th className="text-left p-4 text-sm font-medium text-gray-500">Title</th>
+                <th className="text-left p-4 text-sm font-medium text-gray-500">Type</th>
+                <th className="text-left p-4 text-sm font-medium text-gray-500">Amount</th>
+                <th className="text-left p-4 text-sm font-medium text-gray-500">Status</th>
+                <th className="text-left p-4 text-sm font-medium text-gray-500">Usage</th>
+                <th className="text-left p-4 text-sm font-medium text-gray-500">Created</th>
+                <th className="text-right p-4 text-sm font-medium text-gray-500">Actions</th>
               </tr>
             </thead>
             <tbody>
               {sampleLinks.map((link) => (
-                <tr key={link.id} className="border-b border-gray-100 hover:bg-gray-50/50">
-                  <td className="px-6 py-4">
-                    <div>
-                      <div className="text-sm font-medium text-gray-900 truncate max-w-[200px]">{link.title}</div>
-                      <div className="text-sm text-gray-500 truncate max-w-[200px]">{link.description}</div>
+                <tr key={link.id} className="border-b border-gray-100 hover:bg-gray-50">
+                  <td className="p-4">
+                    <div className="text-sm font-medium text-gray-900">{link.title}</div>
+                    <div className="text-sm text-gray-500">{link.description}</div>
+                  </td>
+                  <td className="p-4">
+                    <div className={`inline-flex items-center space-x-2 px-3 py-1 rounded-lg ${
+                      link.type === 'subscription' ? 'bg-blue-50 text-blue-600' :
+                      link.type === 'donation' ? 'bg-green-50 text-green-600' :
+                      'bg-gray-50 text-gray-600'
+                    }`}>
+                      {link.type === 'subscription' && <Calendar className="h-4 w-4" />}
+                      {link.type === 'donation' && <Mail className="h-4 w-4" />}
+                      <span className="text-sm font-medium capitalize">{link.type}</span>
                     </div>
                   </td>
-                  <td className="px-6 py-4">
-                    <span className="text-sm text-gray-500">
+                  <td className="p-4">
+                    <span className="text-sm font-medium text-gray-900">
+                      {link.amount === null ? 'Variable' : `$${link.amount}`}
+                    </span>
+                  </td>
+                  <td className="p-4">
+                    <div className={`inline-flex items-center space-x-2 px-3 py-1 rounded-lg ${
+                      link.status === 'active' ? 'bg-green-50 text-green-600' :
+                      link.status === 'expired' ? 'bg-yellow-50 text-yellow-600' :
+                      'bg-red-50 text-red-600'
+                    }`}>
+                      {link.status === 'active' && <CheckCircle2 className="h-4 w-4" />}
+                      {link.status === 'expired' && <AlertTriangle className="h-4 w-4" />}
+                      {link.status === 'disabled' && <XCircle className="h-4 w-4" />}
+                      <span className="text-sm font-medium capitalize">{link.status}</span>
+                    </div>
+                  </td>
+                  <td className="p-4">
+                    <span className="text-sm text-gray-600">{link.usageCount} times</span>
+                  </td>
+                  <td className="p-4">
+                    <span className="text-sm text-gray-600">
                       {link.createdAt.toLocaleDateString()}
                     </span>
                   </td>
-                  <td className="px-6 py-4">
-                    <span className="text-sm font-medium text-gray-900">
-                      {link.amount === null ? 'Variable' : `$${link.amount.toFixed(2)}`}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="space-y-1">
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-gray-500">Clicks</span>
-                        <span className="text-xs font-medium text-gray-900">{link.clicks}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-gray-500">Payments</span>
-                        <span className="text-xs font-medium text-gray-900">{link.payments}</span>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-gray-500">Conversion</span>
-                        <span className="text-xs font-medium text-gray-900">{link.conversionRate}%</span>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    {link.status === 'active' && (
-                      <div className="flex items-center space-x-2 text-green-600 bg-green-50 px-3 py-1 rounded-lg w-fit">
-                        <CheckCircle2 className="h-4 w-4" />
-                        <span className="text-sm font-medium capitalize">Active</span>
-                      </div>
-                    )}
-                    {link.status === 'paused' && (
-                      <div className="flex items-center space-x-2 text-yellow-600 bg-yellow-50 px-3 py-1 rounded-lg w-fit">
-                        <Clock className="h-4 w-4" />
-                        <span className="text-sm font-medium capitalize">Paused</span>
-                      </div>
-                    )}
-                    {link.status === 'expired' && (
-                      <div className="flex items-center space-x-2 text-red-600 bg-red-50 px-3 py-1 rounded-lg w-fit">
-                        <AlertTriangle className="h-4 w-4" />
-                        <span className="text-sm font-medium capitalize">Expired</span>
-                      </div>
-                    )}
-                  </td>
-                  <td className="px-6 py-4">
+                  <td className="p-4">
                     <div className="flex items-center justify-end space-x-2">
                       <button
-                        onClick={() => setSelectedLink(link)}
-                        className="p-2 text-gray-400 hover:text-primary hover:bg-gray-100 rounded-lg transition-all duration-200"
+                        onClick={() => handleCopyLink(link.id)}
+                        className="p-2 text-gray-400 hover:text-primary hover:bg-gray-100 rounded-lg"
                       >
+                        {showCopied === link.id ? (
+                          <Check className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <Copy className="h-4 w-4" />
+                        )}
+                      </button>
+                      <button className="p-2 text-gray-400 hover:text-primary hover:bg-gray-100 rounded-lg">
                         <Eye className="h-4 w-4" />
                       </button>
-                      <button className="p-2 text-gray-400 hover:text-primary hover:bg-gray-100 rounded-lg transition-all duration-200">
+                      <button className="p-2 text-gray-400 hover:text-primary hover:bg-gray-100 rounded-lg">
                         <MoreHorizontal className="h-4 w-4" />
                       </button>
                     </div>
@@ -481,10 +676,10 @@ const AdminPaymentLinks: React.FC = () => {
       </div>
 
       <AnimatePresence>
-        {selectedLink && (
-          <LinkPreviewModal
-            link={selectedLink}
-            onClose={() => setSelectedLink(null)}
+        {isCreateModalOpen && (
+          <CreateLinkModal
+            isOpen={isCreateModalOpen}
+            onClose={() => setIsCreateModalOpen(false)}
           />
         )}
       </AnimatePresence>

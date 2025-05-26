@@ -16,13 +16,15 @@ import {
   FileText,
   Share2,
   Printer,
-  MoreHorizontal,
   Wallet,
   CreditCard,
   Receipt,
   AlertCircle,
   Copy,
-  Menu
+  DollarSign,
+  TrendingUp,
+  ArrowRight,
+  MoreHorizontal
 } from 'lucide-react';
 import { format } from 'date-fns';
 import {
@@ -35,12 +37,13 @@ import {
   getFilteredRowModel,
 } from '@tanstack/react-table';
 import { AnimatePresence, motion } from 'framer-motion';
+import CustomSelect from '../components/CustomSelect';
 import DatePicker from '../components/DatePicker';
 
 interface Transaction {
   id: string;
   date: Date;
-  counterparty: string;
+  email: string;
   type: 'payment' | 'refund' | 'deposit';
   amount: number;
   currency: string;
@@ -51,7 +54,7 @@ const sampleTransactions: Transaction[] = [
   {
     id: 'TRX-001',
     date: new Date('2024-03-20'),
-    counterparty: 'John Smith',
+    email: 'john@example.com',
     type: 'payment',
     amount: 1250.00,
     currency: 'USD',
@@ -60,7 +63,7 @@ const sampleTransactions: Transaction[] = [
   {
     id: 'TRX-002',
     date: new Date('2024-03-19'),
-    counterparty: 'Alice Johnson',
+    email: 'alice@example.com',
     type: 'deposit',
     amount: 3000.00,
     currency: 'USD',
@@ -69,169 +72,13 @@ const sampleTransactions: Transaction[] = [
   {
     id: 'TRX-003',
     date: new Date('2024-03-18'),
-    counterparty: 'Bob Wilson',
+    email: 'bob@example.com',
     type: 'refund',
     amount: 750.00,
     currency: 'USD',
     status: 'pending'
-  },
-  {
-    id: 'TRX-004',
-    date: new Date('2024-03-17'),
-    counterparty: 'Sarah Davis',
-    type: 'payment',
-    amount: 2100.00,
-    currency: 'USD',
-    status: 'error'
-  },
-  {
-    id: 'TRX-005',
-    date: new Date('2024-03-16'),
-    counterparty: 'Michael Brown',
-    type: 'deposit',
-    amount: 5000.00,
-    currency: 'USD',
-    status: 'success'
-  },
-  {
-    id: 'TRX-006',
-    date: new Date('2024-03-15'),
-    counterparty: 'Emma Wilson',
-    type: 'payment',
-    amount: 890.00,
-    currency: 'USD',
-    status: 'success'
-  },
-  {
-    id: 'TRX-007',
-    date: new Date('2024-03-14'),
-    counterparty: 'David Miller',
-    type: 'refund',
-    amount: 450.00,
-    currency: 'USD',
-    status: 'pending'
-  },
-  {
-    id: 'TRX-008',
-    date: new Date('2024-03-13'),
-    counterparty: 'Sophie Taylor',
-    type: 'deposit',
-    amount: 7500.00,
-    currency: 'USD',
-    status: 'success'
-  },
-  {
-    id: 'TRX-009',
-    date: new Date('2024-03-12'),
-    counterparty: 'James Anderson',
-    type: 'payment',
-    amount: 1750.00,
-    currency: 'USD',
-    status: 'success'
-  },
-  {
-    id: 'TRX-010',
-    date: new Date('2024-03-11'),
-    counterparty: 'Oliver White',
-    type: 'refund',
-    amount: 299.99,
-    currency: 'USD',
-    status: 'error'
   }
 ];
-
-const CustomSelect: React.FC<{
-  value: string;
-  onChange: (value: string) => void;
-  options: { value: string; label: string; icon?: React.ReactNode }[];
-  placeholder: string;
-  className?: string;
-}> = ({ value, onChange, options, placeholder, className = '' }) => {
-  const [isOpen, setIsOpen] = useState(false);
-
-  return (
-    <div className={`relative ${className}`}>
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-xl text-left flex items-center justify-between hover:border-primary transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary/20 group shadow-sm hover:shadow-md"
-      >
-        {value === 'all' ? (
-          <span className="text-gray-500 truncate">{placeholder}</span>
-        ) : (
-          <span className="flex items-center space-x-2 truncate">
-            {options.find(opt => opt.value === value)?.icon}
-            <span>{options.find(opt => opt.value === value)?.label}</span>
-          </span>
-        )}
-        <ChevronDown className={`h-4 w-4 text-gray-400 transition-all duration-300 group-hover:text-primary flex-shrink-0 ml-2 ${isOpen ? 'rotate-180' : ''}`} />
-      </button>
-      
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -10, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -10, scale: 0.95 }}
-            transition={{ duration: 0.2 }}
-            className="absolute z-10 w-full mt-2 bg-white border border-gray-200 rounded-xl shadow-xl py-2 overflow-hidden"
-          >
-            {options.map((option) => (
-              <motion.button
-                key={option.value}
-                onClick={() => {
-                  onChange(option.value);
-                  setIsOpen(false);
-                }}
-                whileHover={{ backgroundColor: 'rgba(0, 0, 0, 0.025)' }}
-                className={`w-full px-4 py-2.5 text-left flex items-center space-x-2 ${
-                  value === option.value ? 'bg-primary/5 text-primary' : 'text-gray-700'
-                }`}
-              >
-                {option.icon}
-                <span className="truncate">{option.label}</span>
-              </motion.button>
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-};
-
-const CustomDateInput: React.FC<{
-  value: Date | null;
-  onChange: (date: Date) => void;
-  placeholder?: string;
-}> = ({ value, onChange, placeholder = 'Select date' }) => {
-  const [isOpen, setIsOpen] = useState(false);
-
-  return (
-    <div className="relative">
-      <button
-        onClick={() => setIsOpen(true)}
-        className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-xl text-left flex items-center space-x-3 hover:border-primary transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary/20 group shadow-sm hover:shadow-md"
-      >
-        <Calendar className="h-4 w-4 text-gray-400 group-hover:text-primary transition-colors" />
-        <span className={value ? 'text-gray-900' : 'text-gray-500'}>
-          {value ? format(value, 'MMM d, yyyy') : placeholder}
-        </span>
-      </button>
-
-      <AnimatePresence>
-        {isOpen && (
-          <DatePicker
-            value={value}
-            onChange={(date) => {
-              onChange(date);
-              setIsOpen(false);
-            }}
-            onClose={() => setIsOpen(false)}
-          />
-        )}
-      </AnimatePresence>
-    </div>
-  );
-};
 
 const TransactionDetailsModal: React.FC<{
   transaction: Transaction;
@@ -251,66 +98,58 @@ const TransactionDetailsModal: React.FC<{
         initial={{ scale: 0.95, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         exit={{ scale: 0.95, opacity: 0 }}
-        transition={{ duration: 0.2 }}
-        className="bg-white rounded-2xl shadow-2xl w-[calc(100vw-2rem)] md:w-full max-w-2xl mx-auto overflow-hidden"
+        className="bg-white rounded-xl shadow-xl w-full max-w-2xl overflow-hidden"
       >
-        <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between bg-gray-50/80 backdrop-blur-sm">
-          <div className="flex items-center space-x-3">
-            <div className="p-2.5 bg-primary/10 rounded-xl">
-              {transaction.type === 'payment' && <ArrowUpRight className="h-5 w-5 text-primary" />}
-              {transaction.type === 'refund' && <RefreshCw className="h-5 w-5 text-primary" />}
-              {transaction.type === 'deposit' && <ArrowDownLeft className="h-5 w-5 text-primary" />}
+        <div className="px-6 py-4 border-b border-gray-200">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <div className="p-2 bg-primary/10 rounded-xl">
+                {transaction.type === 'payment' && <ArrowUpRight className="h-5 w-5 text-primary" />}
+                {transaction.type === 'refund' && <RefreshCw className="h-5 w-5 text-primary" />}
+                {transaction.type === 'deposit' && <ArrowDownLeft className="h-5 w-5 text-primary" />}
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Transaction Details</h3>
+                <p className="text-sm text-gray-500">{transaction.id}</p>
+              </div>
             </div>
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">
-                Transaction Details
-              </h3>
-              <p className="text-sm text-gray-500">
-                {format(transaction.date, 'PPpp')}
-              </p>
-            </div>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-500 p-2 hover:bg-gray-100 rounded-lg"
+            >
+              <XCircle className="h-5 w-5" />
+            </button>
           </div>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-500 p-2 hover:bg-gray-100 rounded-xl transition-all duration-200"
-          >
-            <XCircle className="h-5 w-5" />
-          </button>
         </div>
 
-        <div className="p-4 md:p-6 space-y-4 md:space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
+        <div className="p-6 space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <div className="p-4 bg-gray-50 rounded-xl">
                 <div className="text-sm font-medium text-gray-500 mb-1">Transaction ID</div>
-                <div className="text-sm text-gray-900 font-mono flex items-center justify-between">
-                  {transaction.id}
-                  <button className="text-primary hover:text-primary-dark p-1 hover:bg-primary/5 rounded-lg transition-colors">
-                    <Copy className="h-4 w-4" />
-                  </button>
-                </div>
+                <div className="text-sm text-gray-900 font-mono">{transaction.id}</div>
               </div>
               <div className="p-4 bg-gray-50 rounded-xl">
-                <div className="text-sm font-medium text-gray-500 mb-1">Counterparty</div>
-                <div className="text-sm text-gray-900">{transaction.counterparty}</div>
+                <div className="text-sm font-medium text-gray-500 mb-1">Email</div>
+                <div className="text-sm text-gray-900">{transaction.email}</div>
               </div>
               <div className="p-4 bg-gray-50 rounded-xl">
                 <div className="text-sm font-medium text-gray-500 mb-1">Status</div>
-                <div className="mt-1 flex items-center space-x-2">
+                <div className="mt-1">
                   {transaction.status === 'success' && (
-                    <div className="flex items-center space-x-2 text-green-600 bg-green-50 px-3 py-1 rounded-lg">
+                    <div className="flex items-center space-x-2 text-green-600 bg-green-50 px-3 py-1 rounded-lg w-fit">
                       <CheckCircle2 className="h-4 w-4" />
                       <span className="text-sm font-medium capitalize">Success</span>
                     </div>
                   )}
                   {transaction.status === 'pending' && (
-                    <div className="flex items-center space-x-2 text-yellow-600 bg-yellow-50 px-3 py-1 rounded-lg">
+                    <div className="flex items-center space-x-2 text-yellow-600 bg-yellow-50 px-3 py-1 rounded-lg w-fit">
                       <Clock className="h-4 w-4" />
                       <span className="text-sm font-medium capitalize">Pending</span>
                     </div>
                   )}
                   {transaction.status === 'error' && (
-                    <div className="flex items-center space-x-2 text-red-600 bg-red-50 px-3 py-1 rounded-lg">
+                    <div className="flex items-center space-x-2 text-red-600 bg-red-50 px-3 py-1 rounded-lg w-fit">
                       <AlertCircle className="h-4 w-4" />
                       <span className="text-sm font-medium capitalize">Error</span>
                     </div>
@@ -326,13 +165,6 @@ const TransactionDetailsModal: React.FC<{
                     style: 'currency',
                     currency: transaction.currency,
                   })}
-                </div>
-              </div>
-              <div className="p-4 bg-gray-50 rounded-xl">
-                <div className="text-sm font-medium text-gray-500 mb-1">Payment Method</div>
-                <div className="flex items-center space-x-2">
-                  <CreditCard className="h-4 w-4 text-gray-400" />
-                  <span className="text-sm text-gray-900">**** **** **** 4242</span>
                 </div>
               </div>
               <div className="p-4 bg-gray-50 rounded-xl">
@@ -358,44 +190,12 @@ const TransactionDetailsModal: React.FC<{
                   )}
                 </div>
               </div>
-            </div>
-          </div>
-
-          <div className="border-t border-gray-200 pt-4 md:pt-6">
-            <h4 className="text-sm font-medium text-gray-900 mb-4">Quick Actions</h4>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="flex flex-col items-center justify-center p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-all duration-200 group"
-              >
-                <Download className="h-5 w-5 text-gray-400 group-hover:text-primary mb-2" />
-                <span className="text-sm text-gray-600 group-hover:text-gray-900">Download</span>
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="flex flex-col items-center justify-center p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-all duration-200 group"
-              >
-                <Receipt className="h-5 w-5 text-gray-400 group-hover:text-primary mb-2" />
-                <span className="text-sm text-gray-600 group-hover:text-gray-900">Receipt</span>
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="flex flex-col items-center justify-center p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-all duration-200 group"
-              >
-                <Share2 className="h-5 w-5 text-gray-400 group-hover:text-primary mb-2" />
-                <span className="text-sm text-gray-600 group-hover:text-gray-900">Share</span>
-              </motion.button>
-              <motion.button
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                className="flex flex-col items-center justify-center p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-all duration-200 group"
-              >
-                <Printer className="h-5 w-5 text-gray-400 group-hover:text-primary mb-2" />
-                <span className="text-sm text-gray-600 group-hover:text-gray-900">Print</span>
-              </motion.button>
+              <div className="p-4 bg-gray-50 rounded-xl">
+                <div className="text-sm font-medium text-gray-500 mb-1">Date</div>
+                <div className="text-sm text-gray-900">
+                  {format(transaction.date, 'PPpp')}
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -455,8 +255,8 @@ const Transactions: React.FC = () => {
           <span className="font-mono text-gray-600 hidden md:table-cell">{info.getValue()}</span>
         ),
       }),
-      columnHelper.accessor('counterparty', {
-        header: 'Counterparty',
+      columnHelper.accessor('email', {
+        header: 'Email',
         cell: (info) => (
           <span className="truncate max-w-[150px] block">{info.getValue()}</span>
         ),
@@ -553,9 +353,6 @@ const Transactions: React.FC = () => {
             >
               <Eye className="h-4 w-4" />
             </button>
-            <button className="p-2 text-gray-400 hover:text-primary hover:bg-gray-100 rounded-lg transition-all duration-200 hidden sm:block">
-              <MoreHorizontal className="h-4 w-4" />
-            </button>
           </div>
         ),
       }),
@@ -565,7 +362,7 @@ const Transactions: React.FC = () => {
   const filteredData = useMemo(() => {
     return sampleTransactions.filter(transaction => {
       const matchesSearch = 
-        transaction.counterparty.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        transaction.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
         transaction.id.toLowerCase().includes(searchTerm.toLowerCase());
       
       const matchesStatus = statusFilter === 'all' || transaction.status === statusFilter;
@@ -589,6 +386,12 @@ const Transactions: React.FC = () => {
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
   });
+
+  // Calculate totals
+  const totalVolume = sampleTransactions.reduce((sum, t) => sum + t.amount, 0);
+  const totalPayments = sampleTransactions.filter(t => t.type === 'payment').reduce((sum, t) => sum + t.amount, 0);
+  const totalRefunds = sampleTransactions.filter(t => t.type === 'refund').reduce((sum, t) => sum + t.amount, 0);
+  const totalProfit = totalVolume - totalRefunds;
 
   return (
     <div className="p-3 sm:p-4 md:p-6 space-y-4 md:space-y-6">
@@ -616,12 +419,12 @@ const Transactions: React.FC = () => {
         >
           <div className="flex items-center space-x-3 md:space-x-4">
             <div className="p-2 md:p-3 bg-primary/10 rounded-xl flex-shrink-0">
-              <Wallet className="h-5 w-5 md:h-6 md:w-6 text-primary" />
+              <DollarSign className="h-5 w-5 md:h-6 md:w-6 text-primary" />
             </div>
             <div>
-              <p className="text-xs md:text-sm text-gray-500">Total Volume</p>
-              <p className="text-lg md:text-2xl font-semibold text-gray-900">$45,231</p>
-              <p className="text-xs md:text-sm text-green-600">+2.5% from last month</p>
+              <p className="text-xs md:text-sm text-gray-500">Total Profit</p>
+              <p className="text-lg md:text-2xl font-semibold text-gray-900">${totalProfit.toFixed(2)}</p>
+              <p className="text-xs md:text-sm text-gray-500">After refunds</p>
             </div>
           </div>
         </motion.div>
@@ -632,12 +435,12 @@ const Transactions: React.FC = () => {
         >
           <div className="flex items-center space-x-3 md:space-x-4">
             <div className="p-2 md:p-3 bg-blue-50 rounded-xl flex-shrink-0">
-              <ArrowUpRight className="h-5 w-5 md:h-6 md:w-6 text-blue-600" />
+              <TrendingUp className="h-5 w-5 md:h-6 md:w-6 text-blue-600" />
             </div>
             <div>
-              <p className="text-xs md:text-sm text-gray-500">Total Payments</p>
-              <p className="text-lg md:text-2xl font-semibold text-gray-900">1,234</p>
-              <p className="text-xs md:text-sm text-green-600">+5.2% from last month</p>
+              <p className="text-xs md:text-sm text-gray-500">Total Volume</p>
+              <p className="text-lg md:text-2xl font-semibold text-gray-900">${totalVolume.toFixed(2)}</p>
+              <p className="text-xs md:text-sm text-gray-500">All transactions</p>
             </div>
           </div>
         </motion.div>
@@ -648,12 +451,12 @@ const Transactions: React.FC = () => {
         >
           <div className="flex items-center space-x-3 md:space-x-4">
             <div className="p-2 md:p-3 bg-orange-50 rounded-xl flex-shrink-0">
-              <RefreshCw className="h-5 w-5 md:h-6 md:w-6 text-orange-600" />
+              <ArrowRight className="h-5 w-5 md:h-6 md:w-6 text-orange-600" />
             </div>
             <div>
-              <p className="text-xs md:text-sm text-gray-500">Total Refunds</p>
-              <p className="text-lg md:text-2xl font-semibold text-gray-900">45</p>
-              <p className="text-xs md:text-sm text-red-600">-1.8% from last month</p>
+              <p className="text-xs md:text-sm text-gray-500">Total Payments</p>
+              <p className="text-lg md:text-2xl font-semibold text-gray-900">${totalPayments.toFixed(2)}</p>
+              <p className="text-xs md:text-sm text-gray-500">Outgoing</p>
             </div>
           </div>
         </motion.div>
@@ -664,18 +467,18 @@ const Transactions: React.FC = () => {
         >
           <div className="flex items-center space-x-3 md:space-x-4">
             <div className="p-2 md:p-3 bg-green-50 rounded-xl flex-shrink-0">
-              <ArrowDownLeft className="h-5 w-5 md:h-6 md:w-6 text-green-600" />
+              <CheckCircle2 className="h-5 w-5 md:h-6 md:w-6 text-green-600" />
             </div>
             <div>
-              <p className="text-xs md:text-sm text-gray-500">Total Deposits</p>
-              <p className="text-lg md:text-2xl font-semibold text-gray-900">789</p>
-              <p className="text-xs md:text-sm text-green-600">+3.1% from last month</p>
+              <p className="text-xs md:text-sm text-gray-500">Total Refunds</p>
+              <p className="text-lg md:text-2xl font-semibold text-gray-900">${totalRefunds.toFixed(2)}</p>
+              <p className="text-xs md:text-sm text-gray-500">Returned</p>
             </div>
           </div>
         </motion.div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200">
         <div className="p-4 md:p-6 border-b border-gray-100">
           <div className="flex flex-col lg:flex-row gap-4">
             <div className="flex-1">
@@ -707,28 +510,36 @@ const Transactions: React.FC = () => {
               />
               <div className="flex gap-4 col-span-2 sm:col-span-1">
                 <div className="flex-1">
-                  <CustomDateInput
-                    value={startDate}
-                    onChange={setStartDate}
-                    placeholder="Start date"
-                  />
+                  <button
+                    onClick={() => setStartDate(new Date())}
+                    className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-xl text-left flex items-center space-x-3 hover:border-primary transition-all duration-200"
+                  >
+                    <Calendar className="h-4 w-4 text-gray-400" />
+                    <span className={startDate ? 'text-gray-900' : 'text-gray-500'}>
+                      {startDate ? format(startDate, 'MMM d, yyyy') : 'Start date'}
+                    </span>
+                  </button>
                 </div>
                 <div className="flex-1">
-                  <CustomDateInput
-                    value={endDate}
-                    onChange={setEndDate}
-                    placeholder="End date"
-                  />
+                  <button
+                    onClick={() => setEndDate(new Date())}
+                    className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-xl text-left flex items-center space-x-3 hover:border-primary transition-all duration-200"
+                  >
+                    <Calendar className="h-4 w-4 text-gray-400" />
+                    <span className={endDate ? 'text-gray-900' : 'text-gray-500'}>
+                      {endDate ? format(endDate, 'MMM d, yyyy') : 'End date'}
+                    </span>
+                  </button>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="overflow-x-auto -mx-3 md:mx-0">
-          <table className="w-full min-w-[800px] md:w-full">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[800px]">
             <thead>
-              <tr className="border-b border-gray-100">
+              <tr className="border-b border-gray-200">
                 {table.getFlatHeaders().map((header) => (
                   <th
                     key={header.id}

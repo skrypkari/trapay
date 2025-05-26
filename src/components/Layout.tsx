@@ -14,7 +14,6 @@ import {
   Users,
   CreditCard,
   FileText,
-  Webhook,
   LifeBuoy
 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';

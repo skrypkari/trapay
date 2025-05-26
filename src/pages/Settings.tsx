@@ -1,35 +1,7 @@
 import React, { useState } from 'react';
-import { 
-  User, 
-  Mail, 
-  Phone, 
-  Globe2, 
-  Building2, 
-  FileText,
-  Lock,
-  Smartphone,
-  LogOut,
-  Shield,
-  Bell,
-  Key,
-  Trash2,
-  AlertTriangle,
-  Check,
-  X,
-  Upload,
-  ChevronDown
-} from 'lucide-react';
+import { User, Lock, Shield, Bell, Key, AlertTriangle, Check, X, Upload, GitBranch as BrandTelegram } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
-
-interface Session {
-  id: string;
-  device: string;
-  browser: string;
-  ip: string;
-  location: string;
-  lastActive: string;
-  isCurrent: boolean;
-}
+import CustomSelect from '../components/CustomSelect';
 
 const Settings: React.FC = () => {
   const [activeTab, setActiveTab] = useState('profile');
@@ -37,45 +9,26 @@ const Settings: React.FC = () => {
   const [showRevokeConfirm, setShowRevokeConfirm] = useState(false);
   const [is2FAEnabled, setIs2FAEnabled] = useState(false);
 
-  const activeSessions: Session[] = [
-    {
-      id: '1',
-      device: 'MacBook Pro',
-      browser: 'Chrome 121.0',
-      ip: '192.168.1.1',
-      location: 'London, UK',
-      lastActive: 'Current session',
-      isCurrent: true
-    },
-    {
-      id: '2',
-      device: 'iPhone 13',
-      browser: 'Safari Mobile',
-      ip: '192.168.1.2',
-      location: 'London, UK',
-      lastActive: '2 hours ago',
-      isCurrent: false
-    },
-    {
-      id: '3',
-      device: 'Windows PC',
-      browser: 'Firefox 123.0',
-      ip: '192.168.1.3',
-      location: 'Manchester, UK',
-      lastActive: '1 day ago',
-      isCurrent: false
-    }
-  ];
-
   const tabs = [
     { id: 'profile', label: 'Profile', icon: User },
-    { id: 'business', label: 'Business', icon: Building2 },
     { id: 'security', label: 'Security', icon: Shield },
     { id: 'notifications', label: 'Notifications', icon: Bell },
     { id: 'advanced', label: 'Advanced', icon: Key }
   ];
 
-  const notificationSettings = [
+  const timezoneOptions = [
+    { value: 'UTC', label: 'UTC (GMT+0)' },
+    { value: 'EST', label: 'Eastern Time (GMT-5)' },
+    { value: 'PST', label: 'Pacific Time (GMT-8)' }
+  ];
+
+  const languageOptions = [
+    { value: 'en-US', label: 'English (US)' },
+    { value: 'en-GB', label: 'English (UK)' },
+    { value: 'es', label: 'Spanish' }
+  ];
+
+  const telegramNotifications = [
     { id: 'payment_success', label: 'Successful payment', description: 'When a payment is successfully processed' },
     { id: 'payment_failed', label: 'Failed payment', description: 'When a payment fails to process' },
     { id: 'refund', label: 'Refund processed', description: 'When a refund is issued to a customer' },
@@ -94,7 +47,6 @@ const Settings: React.FC = () => {
           </p>
         </div>
 
-        {/* Settings Navigation */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
           <div className="border-b border-gray-200">
             <div className="flex overflow-x-auto">
@@ -127,9 +79,9 @@ const Settings: React.FC = () => {
                     </button>
                   </div>
                   <div>
-                    <h2 className="text-lg font-semibold text-gray-900">Profile Picture</h2>
+                    <h2 className="text-lg font-semibold text-gray-900">Company Logo</h2>
                     <p className="text-sm text-gray-500">
-                      Upload a profile picture or company logo
+                      Upload your company logo
                     </p>
                   </div>
                 </div>
@@ -141,8 +93,9 @@ const Settings: React.FC = () => {
                     </label>
                     <input
                       type="text"
-                      className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
-                      placeholder="John Doe"
+                      className="w-full px-4 py-2.5 rounded-lg border border-gray-300 bg-gray-100 text-gray-500 cursor-not-allowed"
+                      value="John Doe"
+                      disabled
                     />
                   </div>
                   <div>
@@ -151,39 +104,32 @@ const Settings: React.FC = () => {
                     </label>
                     <input
                       type="text"
-                      className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
-                      placeholder="johndoe"
+                      className="w-full px-4 py-2.5 rounded-lg border border-gray-300 bg-gray-100 text-gray-500 cursor-not-allowed"
+                      value="johndoe"
+                      disabled
                     />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Email Address
                     </label>
-                    <div className="flex space-x-2">
-                      <input
-                        type="email"
-                        className="flex-1 px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
-                        placeholder="john@example.com"
-                      />
-                      <button className="px-4 py-2.5 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors">
-                        Verify
-                      </button>
-                    </div>
+                    <input
+                      type="email"
+                      className="w-full px-4 py-2.5 rounded-lg border border-gray-300 bg-gray-100 text-gray-500 cursor-not-allowed"
+                      value="john@example.com"
+                      disabled
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Phone Number
                     </label>
-                    <div className="flex space-x-2">
-                      <input
-                        type="tel"
-                        className="flex-1 px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
-                        placeholder="+1 (555) 000-0000"
-                      />
-                      <button className="px-4 py-2.5 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors">
-                        Verify
-                      </button>
-                    </div>
+                    <input
+                      type="tel"
+                      className="w-full px-4 py-2.5 rounded-lg border border-gray-300 bg-gray-100 text-gray-500 cursor-not-allowed"
+                      value="+1 (555) 000-0000"
+                      disabled
+                    />
                   </div>
                 </div>
 
@@ -192,104 +138,23 @@ const Settings: React.FC = () => {
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Time Zone
                     </label>
-                    <select className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none">
-                      <option>UTC (GMT+0)</option>
-                      <option>Eastern Time (GMT-5)</option>
-                      <option>Pacific Time (GMT-8)</option>
-                    </select>
+                    <CustomSelect
+                      value="UTC"
+                      onChange={() => {}}
+                      options={timezoneOptions}
+                      placeholder="Select timezone"
+                    />
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Language
                     </label>
-                    <select className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none">
-                      <option>English (US)</option>
-                      <option>English (UK)</option>
-                      <option>Spanish</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="flex justify-end pt-6">
-                  <button className="px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary-dark transition-colors">
-                    Save Changes
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Business Settings */}
-            {activeTab === 'business' && (
-              <div className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Company Name
-                    </label>
-                    <input
-                      type="text"
-                      className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
-                      placeholder="Acme Inc."
+                    <CustomSelect
+                      value="en-US"
+                      onChange={() => {}}
+                      options={languageOptions}
+                      placeholder="Select language"
                     />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Business Type
-                    </label>
-                    <select className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none">
-                      <option>Limited Company</option>
-                      <option>Sole Proprietorship</option>
-                      <option>Partnership</option>
-                    </select>
-                  </div>
-                  <div className="md:col-span-2">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Business Address
-                    </label>
-                    <textarea
-                      className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
-                      rows={3}
-                      placeholder="123 Business Street&#10;City, Country&#10;Postal Code"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Registration Number
-                    </label>
-                    <input
-                      type="text"
-                      className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
-                      placeholder="12345678"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Tax ID
-                    </label>
-                    <input
-                      type="text"
-                      className="w-full px-4 py-2.5 rounded-lg border border-gray-300 focus:ring-2 focus:ring-primary focus:border-primary outline-none"
-                      placeholder="GB123456789"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Business Documents
-                  </label>
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                    <div className="mx-auto h-12 w-12 text-gray-400">
-                      <Upload className="h-12 w-12" />
-                    </div>
-                    <div className="mt-4">
-                      <button className="text-sm font-medium text-primary hover:text-primary-dark">
-                        Upload a file
-                      </button>
-                      <p className="text-xs text-gray-500 mt-1">
-                        PDF, JPG, PNG up to 10MB
-                      </p>
-                    </div>
                   </div>
                 </div>
 
@@ -304,7 +169,6 @@ const Settings: React.FC = () => {
             {/* Security Settings */}
             {activeTab === 'security' && (
               <div className="space-y-6">
-                {/* Password Section */}
                 <div className="space-y-6">
                   <div>
                     <h2 className="text-lg font-semibold text-gray-900">Change Password</h2>
@@ -350,7 +214,6 @@ const Settings: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Two-Factor Authentication */}
                 <div className="pt-6 border-t border-gray-200">
                   <div className="flex items-center justify-between">
                     <div>
@@ -375,62 +238,6 @@ const Settings: React.FC = () => {
                     </div>
                   </div>
                 </div>
-
-                {/* Active Sessions */}
-                <div className="pt-6 border-t border-gray-200">
-                  <div>
-                    <h2 className="text-lg font-semibold text-gray-900">Active Sessions</h2>
-                    <p className="mt-1 text-sm text-gray-500">
-                      Manage and logout from your active sessions on other browsers and devices.
-                    </p>
-                  </div>
-
-                  <div className="mt-6 space-y-4">
-                    {activeSessions.map((session) => (
-                      <div
-                        key={session.id}
-                        className="flex items-center justify-between p-4 bg-gray-50 rounded-lg"
-                      >
-                        <div className="flex items-center space-x-3">
-                          <div className="p-2 bg-white rounded-lg">
-                            {session.device.includes('iPhone') ? (
-                              <Smartphone className="h-5 w-5 text-gray-400" />
-                            ) : (
-                              <Globe2 className="h-5 w-5 text-gray-400" />
-                            )}
-                          </div>
-                          <div>
-                            <div className="flex items-center space-x-2">
-                              <p className="text-sm font-medium text-gray-900">
-                                {session.device}
-                              </p>
-                              {session.isCurrent && (
-                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                  Current
-                                </span>
-                              )}
-                            </div>
-                            <div className="mt-1 text-xs text-gray-500">
-                              <p>{session.browser} • {session.ip}</p>
-                              <p>{session.location} • {session.lastActive}</p>
-                            </div>
-                          </div>
-                        </div>
-                        {!session.isCurrent && (
-                          <button className="text-sm text-red-600 hover:text-red-700">
-                            Logout
-                          </button>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="mt-6">
-                    <button className="text-sm text-red-600 hover:text-red-700 font-medium">
-                      Logout of all other sessions
-                    </button>
-                  </div>
-                </div>
               </div>
             )}
 
@@ -438,36 +245,31 @@ const Settings: React.FC = () => {
             {activeTab === 'notifications' && (
               <div className="space-y-6">
                 <div>
-                  <h2 className="text-lg font-semibold text-gray-900">Notification Preferences</h2>
+                  <h2 className="text-lg font-semibold text-gray-900">Telegram Notifications</h2>
                   <p className="mt-1 text-sm text-gray-500">
-                    Choose what notifications you want to receive.
+                    Choose what notifications you want to receive via Telegram.
                   </p>
                 </div>
 
                 <div className="space-y-4">
-                  {notificationSettings.map((setting) => (
+                  {telegramNotifications.map((notification) => (
                     <div
-                      key={setting.id}
+                      key={notification.id}
                       className="flex items-start space-x-4 p-4 bg-gray-50 rounded-lg"
                     >
                       <div className="flex-1">
-                        <p className="text-sm font-medium text-gray-900">{setting.label}</p>
-                        <p className="mt-1 text-sm text-gray-500">{setting.description}</p>
+                        <p className="text-sm font-medium text-gray-900">{notification.label}</p>
+                        <p className="mt-1 text-sm text-gray-500">{notification.description}</p>
                       </div>
-                      <div className="flex items-center space-x-4">
+                      <div className="flex items-center">
                         <label className="flex items-center space-x-2">
                           <input
                             type="checkbox"
                             className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
                           />
-                          <span className="text-sm text-gray-600">Email</span>
-                        </label>
-                        <label className="flex items-center space-x-2">
-                          <input
-                            type="checkbox"
-                            className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
-                          />
-                          <span className="text-sm text-gray-600">SMS</span>
+                          <span className="text-sm text-gray-600">
+                            <BrandTelegram className="h-4 w-4" />
+                          </span>
                         </label>
                       </div>
                     </div>

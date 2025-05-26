@@ -62,6 +62,10 @@ const router = createBrowserRouter([
             path: 'payment-links',
             element: <PaymentLinks />,
           },
+          {
+            path: '*',
+            element: <Navigate to="/dashboard/account" replace />,
+          }
         ],
       },
       {
@@ -102,15 +106,27 @@ const router = createBrowserRouter([
           {
             path: 'support',
             element: <AdminSupport />,
+          },
+          {
+            path: '*',
+            element: <Navigate to="/admin/dashboard" replace />,
           }
         ],
       },
+      {
+        path: '*',
+        element: <Navigate to="/dashboard/account" replace />,
+      }
     ],
   },
   {
     path: '/login',
     element: <Login />,
   },
+  {
+    path: '*',
+    element: <Navigate to="/login" replace />,
+  }
 ]);
 
 export default router;
