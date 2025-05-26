@@ -211,32 +211,6 @@ const CreateLinkModal: React.FC<{
                       </div>
                     </div>
                   </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Visibility
-                    </label>
-                    <div className="flex space-x-4">
-                      <label className="flex items-center space-x-2">
-                        <input
-                          type="radio"
-                          checked={visibility === 'public'}
-                          onChange={() => setVisibility('public')}
-                          className="h-4 w-4 text-primary focus:ring-primary border-gray-300"
-                        />
-                        <span className="text-sm text-gray-600">Public</span>
-                      </label>
-                      <label className="flex items-center space-x-2">
-                        <input
-                          type="radio"
-                          checked={visibility === 'private'}
-                          onChange={() => setVisibility('private')}
-                          className="h-4 w-4 text-primary focus:ring-primary border-gray-300"
-                        />
-                        <span className="text-sm text-gray-600">Private</span>
-                      </label>
-                    </div>
-                  </div>
                 </div>
 
                 <div>
@@ -281,41 +255,7 @@ const CreateLinkModal: React.FC<{
                     placeholder="https://example.com/thank-you"
                   />
                 </div>
-
-                <div className="space-y-4">
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      checked={emailNotification}
-                      onChange={(e) => setEmailNotification(e.target.checked)}
-                      className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
-                    />
-                    <span className="text-sm text-gray-600">Enable email notifications</span>
-                  </label>
-
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      checked={allowReuse}
-                      onChange={(e) => setAllowReuse(e.target.checked)}
-                      className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
-                      disabled={linkType === 'single'}
-                    />
-                    <span className="text-sm text-gray-600">Allow multiple payments</span>
-                  </label>
-
-                  <label className="flex items-center space-x-2">
-                    <input
-                      type="checkbox"
-                      checked={showDescription}
-                      onChange={(e) => setShowDescription(e.target.checked)}
-                      className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
-                    />
-                    <span className="text-sm text-gray-600">Show description on payment page</span>
-                  </label>
-                </div>
               </div>
-
               <div className="flex justify-end space-x-3 sticky bottom-0 bg-white py-4 border-t border-gray-200 mt-6">
                 <button
                   type="button"
