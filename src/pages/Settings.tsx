@@ -100,12 +100,12 @@ const Settings: React.FC = () => {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Display Name
+                      Brand
                     </label>
                     <input
                       type="text"
                       className="w-full px-4 py-2.5 rounded-lg border border-gray-300 bg-gray-100 text-gray-500 cursor-not-allowed"
-                      value="johndoe"
+                      value="FastShop"
                       disabled
                     />
                   </div>
