@@ -527,7 +527,7 @@ const Transactions: React.FC = () => {
                 className="w-full sm:w-[180px]"
               />
               <div className="flex gap-4 col-span-2 sm:col-span-1">
-                <div className="flex-1">
+                <div>
                   <button
                     onClick={() => setStartDate(new Date())}
                     className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-xl text-left flex items-center space-x-3 hover:border-primary transition-all duration-200"
@@ -538,7 +538,7 @@ const Transactions: React.FC = () => {
                     </span>
                   </button>
                 </div>
-                <div className="flex-1">
+                <div >
                   <button
                     onClick={() => setEndDate(new Date())}
                     className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-xl text-left flex items-center space-x-3 hover:border-primary transition-all duration-200"

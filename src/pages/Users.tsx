@@ -121,7 +121,7 @@ const CreateUserModal: React.FC<{
     username: '',
     telegramId: '',
     merchantUrl: '',
-    commission: 0.5,
+    commission: 2.5,
     gateways: []
   });
 
@@ -210,6 +210,25 @@ const CreateUserModal: React.FC<{
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
                   />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Commission Rate (%)
+                  </label>
+                  <div className="relative">
+                    <input
+                      type="number"
+                      required
+                      value={formData.commission}
+                      onChange={(e) => setFormData({ ...formData, commission: parseFloat(e.target.value) })}
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none pr-8"
+                      step="0.1"
+                      min="0"
+                      max="100"
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">%</span>
+                  </div>
                 </div>
 
                 <div>

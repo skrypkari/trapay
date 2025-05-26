@@ -43,7 +43,7 @@ interface PaymentLink {
   showDescription: boolean;
   createdAt: Date;
   status: 'active' | 'expired' | 'disabled';
-  type: 'single' | 'multi' | 'subscription' | 'donation';
+  type: 'single' | 'multi';
   usageCount: number;
 }
 
@@ -99,7 +99,7 @@ const CreateLinkModal: React.FC<{
   const [allowReuse, setAllowReuse] = useState(true);
   const [showDescription, setShowDescription] = useState(true);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
-  const [linkType, setLinkType] = useState<'single' | 'multi' | 'subscription' | 'donation'>('single');
+  const [linkType, setLinkType] = useState<'single' | 'multi'>('single');
 
   const currencyOptions = [
     { value: 'USD', label: 'USD' },
@@ -110,8 +110,6 @@ const CreateLinkModal: React.FC<{
   const linkTypeOptions = [
     { value: 'single', label: 'Single-use', icon: <Link2 className="h-4 w-4" /> },
     { value: 'multi', label: 'Multi-use', icon: <RefreshCw className="h-4 w-4" /> },
-    { value: 'subscription', label: 'Subscription', icon: <Calendar className="h-4 w-4" /> },
-    { value: 'donation', label: 'Donation', icon: <Mail className="h-4 w-4" /> }
   ];
 
   const handleSubmit = (e: React.FormEvent) => {

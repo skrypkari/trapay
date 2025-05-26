@@ -16,7 +16,8 @@ import {
   Building2,
   Bitcoin,
   CreditCard,
-  AlertCircle
+  AlertCircle,
+  X
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -29,10 +30,10 @@ interface Payout {
   amount: number;
   currency: string;
   method: {
-    type: 'bank' | 'card' | 'crypto';
+    type: 'crypto';
     details: string;
   };
-  status: 'pending' | 'processing' | 'paid' | 'failed' | 'cancelled';
+  status: 'processing' | 'paid' | 'failed' | 'cancelled';
   fee: number;
 }
 
@@ -43,8 +44,8 @@ const samplePayouts: Payout[] = [
     amount: 5000.00,
     currency: 'USD',
     method: {
-      type: 'bank',
-      details: '****1234'
+      type: 'crypto',
+      details: 'USDT TRC-20'
     },
     status: 'paid',
     fee: 25.00
@@ -55,23 +56,11 @@ const samplePayouts: Payout[] = [
     amount: 2500.00,
     currency: 'USD',
     method: {
-      type: 'card',
-      details: '****5678'
+      type: 'crypto',
+      details: 'USDT Polygon'
     },
     status: 'processing',
     fee: 12.50
-  },
-  {
-    id: 'PO-003',
-    date: new Date('2024-03-18'),
-    amount: 1000.00,
-    currency: 'USD',
-    method: {
-      type: 'crypto',
-      details: '0x1234...5678'
-    },
-    status: 'pending',
-    fee: 5.00
   }
 ];
 
@@ -110,7 +99,7 @@ const PayoutDetailsModal: React.FC<{
               onClick={onClose}
               className="text-gray-400 hover:text-gray-500 p-2 hover:bg-gray-100 rounded-lg"
             >
-              <XCircle className="h-5 w-5" />
+              <X className="h-5 w-5" />
             </button>
           </div>
         </div>
@@ -133,12 +122,6 @@ const PayoutDetailsModal: React.FC<{
                       <span className="text-sm font-medium capitalize">Processing</span>
                     </div>
                   )}
-                  {payout.status === 'pending' && (
-                    <div className="flex items-center space-x-2 text-yellow-600 bg-yellow-50 px-3 py-1 rounded-lg w-fit">
-                      <Clock className="h-4 w-4" />
-                      <span className="text-sm font-medium capitalize">Pending</span>
-                    </div>
-                  )}
                   {payout.status === 'failed' && (
                     <div className="flex items-center space-x-2 text-red-600 bg-red-50 px-3 py-1 rounded-lg w-fit">
                       <AlertCircle className="h-4 w-4" />
@@ -156,9 +139,7 @@ const PayoutDetailsModal: React.FC<{
               <div className="p-4 bg-gray-50 rounded-xl">
                 <div className="text-sm font-medium text-gray-500 mb-1">Method</div>
                 <div className="flex items-center space-x-2">
-                  {payout.method.type === 'bank' && <Building2 className="h-4 w-4 text-gray-400" />}
-                  {payout.method.type === 'card' && <CreditCard className="h-4 w-4 text-gray-400" />}
-                  {payout.method.type === 'crypto' && <Bitcoin className="h-4 w-4 text-gray-400" />}
+                  <Bitcoin className="h-4 w-4 text-gray-400" />
                   <span className="text-sm text-gray-900">{payout.method.details}</span>
                 </div>
               </div>
@@ -210,12 +191,17 @@ const Payouts: React.FC = () => {
 
   const statusOptions = [
     { value: 'all', label: 'All Status' },
-    { value: 'pending', label: 'Pending', icon: <Clock className="h-4 w-4 text-yellow-600" /> },
     { value: 'processing', label: 'Processing', icon: <Clock className="h-4 w-4 text-blue-600" /> },
     { value: 'paid', label: 'Paid', icon: <CheckCircle2 className="h-4 w-4 text-green-600" /> },
     { value: 'failed', label: 'Failed', icon: <AlertCircle className="h-4 w-4 text-red-600" /> },
     { value: 'cancelled', label: 'Cancelled', icon: <XCircle className="h-4 w-4 text-gray-600" /> }
   ];
+
+  // Calculate totals
+  const totalBalance = 45231.00;
+  const totalPaidOut = 128450.00;
+  const awaitingPayout = 24500.00;
+  const thisMonth = 24500.00;
 
   return (
     <div className="p-4 md:p-6 space-y-6">
@@ -239,7 +225,7 @@ const Payouts: React.FC = () => {
             </div>
             <div>
               <p className="text-sm text-gray-500">Available Balance</p>
-              <p className="text-lg md:text-2xl font-semibold text-gray-900">$45,231</p>
+              <p className="text-lg md:text-2xl font-semibold text-gray-900">${totalBalance.toLocaleString()}</p>
             </div>
           </div>
         </motion.div>
@@ -254,7 +240,7 @@ const Payouts: React.FC = () => {
             </div>
             <div>
               <p className="text-sm text-gray-500">Total Paid Out</p>
-              <p className="text-lg md:text-2xl font-semibold text-gray-900">$128,450</p>
+              <p className="text-lg md:text-2xl font-semibold text-gray-900">${totalPaidOut.toLocaleString()}</p>
             </div>
           </div>
         </motion.div>
@@ -265,11 +251,11 @@ const Payouts: React.FC = () => {
         >
           <div className="flex items-center space-x-3">
             <div className="p-2 md:p-3 bg-yellow-50 rounded-xl">
-              <Clock className="h-5 w-5 md:h-6 md:w-6 text-yellow-600" />
+              <DollarSign className="h-5 w-5 md:h-6 md:w-6 text-yellow-600" />
             </div>
             <div>
-              <p className="text-sm text-gray-500">Pending</p>
-              <p className="text-lg md:text-2xl font-semibold text-gray-900">$3,500</p>
+              <p className="text-sm text-gray-500">Awaiting Payout</p>
+              <p className="text-lg md:text-2xl font-semibold text-gray-900">${awaitingPayout.toLocaleString()}</p>
             </div>
           </div>
         </motion.div>
@@ -284,7 +270,7 @@ const Payouts: React.FC = () => {
             </div>
             <div>
               <p className="text-sm text-gray-500">This Month</p>
-              <p className="text-lg md:text-2xl font-semibold text-gray-900">$24,500</p>
+              <p className="text-lg md:text-2xl font-semibold text-gray-900">${thisMonth.toLocaleString()}</p>
             </div>
           </div>
         </motion.div>
@@ -314,7 +300,7 @@ const Payouts: React.FC = () => {
                 className="w-[180px]"
               />
               <div className="flex gap-4">
-                <div className="relative">
+                <div>
                   <button
                     onClick={() => setIsStartDatePickerOpen(true)}
                     className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-xl text-left flex items-center space-x-3 hover:border-primary transition-all duration-200"
@@ -337,7 +323,7 @@ const Payouts: React.FC = () => {
                     )}
                   </AnimatePresence>
                 </div>
-                <div className="relative">
+                <div>
                   <button
                     onClick={() => setIsEndDatePickerOpen(true)}
                     className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-xl text-left flex items-center space-x-3 hover:border-primary transition-all duration-200"
@@ -414,12 +400,6 @@ const Payouts: React.FC = () => {
                       <div className="flex items-center space-x-2 text-blue-600 bg-blue-50 px-3 py-1 rounded-lg w-fit">
                         <Clock className="h-4 w-4" />
                         <span className="text-sm font-medium capitalize">Processing</span>
-                      </div>
-                    )}
-                    {payout.status === 'pending' && (
-                      <div className="flex items-center space-x-2 text-yellow-600 bg-yellow-50 px-3 py-1 rounded-lg w-fit">
-                        <Clock className="h-4 w-4" />
-                        <span className="text-sm font-medium capitalize">Pending</span>
                       </div>
                     )}
                     {payout.status === 'failed' && (
