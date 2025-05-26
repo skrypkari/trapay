@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import {
   Search,
-  Filter,
   Calendar,
+  Filter,
   ArrowUpDown,
   Eye,
   CheckCircle2,
@@ -14,7 +14,10 @@ import {
   ArrowUpRight,
   AlertTriangle,
   Globe,
-  MoreHorizontal
+  MoreHorizontal,
+  CreditCard,
+  Building2,
+  Bitcoin
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { AnimatePresence, motion } from 'framer-motion';
@@ -27,10 +30,16 @@ interface Payment {
   merchantOrderId: string;
   systemTransactionId: string;
   merchantName: string;
-  status: 'success' | 'pending' | 'failed';
-  gatewayName: string;
+  payerName: string;
+  payerEmail: string;
+  paymentMethod: {
+    type: 'card' | 'bank' | 'crypto';
+    details: string;
+  };
+  type: 'payment' | 'refund' | 'deposit';
   amount: number;
   currency: string;
+  status: 'success' | 'pending' | 'error';
   ipAddress: string;
   country: string;
 }
@@ -42,10 +51,16 @@ const samplePayments: Payment[] = [
     merchantOrderId: 'ORD-123456',
     systemTransactionId: 'TRX-789012',
     merchantName: 'Acme Store',
-    status: 'success',
-    gatewayName: 'Stripe',
+    payerName: 'John Smith',
+    payerEmail: 'john.smith@example.com',
+    paymentMethod: {
+      type: 'card',
+      details: '****4242'
+    },
+    type: 'payment',
     amount: 1250.00,
     currency: 'USD',
+    status: 'success',
     ipAddress: '192.168.1.1',
     country: 'United States'
   },
@@ -55,10 +70,16 @@ const samplePayments: Payment[] = [
     merchantOrderId: 'ORD-123457',
     systemTransactionId: 'TRX-789013',
     merchantName: 'Tech Shop',
-    status: 'pending',
-    gatewayName: 'PayPal',
+    payerName: 'Alice Johnson',
+    payerEmail: 'alice.johnson@example.com',
+    paymentMethod: {
+      type: 'bank',
+      details: 'GB29NWBK60161331926819'
+    },
+    type: 'payment',
     amount: 750.50,
     currency: 'USD',
+    status: 'pending',
     ipAddress: '192.168.1.2',
     country: 'Canada'
   },
@@ -68,10 +89,16 @@ const samplePayments: Payment[] = [
     merchantOrderId: 'ORD-123458',
     systemTransactionId: 'TRX-789014',
     merchantName: 'Digital Goods',
-    status: 'failed',
-    gatewayName: 'Stripe',
+    payerName: 'Bob Wilson',
+    payerEmail: 'bob.wilson@example.com',
+    paymentMethod: {
+      type: 'crypto',
+      details: '0x742d35Cc6634C0532925a3b844Bc454e4438f44e'
+    },
+    type: 'payment',
     amount: 299.99,
     currency: 'USD',
+    status: 'error',
     ipAddress: '192.168.1.3',
     country: 'United Kingdom'
   }
@@ -121,13 +148,51 @@ const PaymentDetailsModal: React.FC<{
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <div className="p-4 bg-gray-50 rounded-xl">
+                <div className="text-sm font-medium text-gray-500 mb-1">Payer Details</div>
+                <div className="space-y-2">
+                  <div className="text-sm text-gray-900 font-medium">{payment.payerName}</div>
+                  <div className="text-sm text-gray-600">{payment.payerEmail}</div>
+                </div>
+              </div>
+
+              <div className="p-4 bg-gray-50 rounded-xl">
+                <div className="text-sm font-medium text-gray-500 mb-1">Payment Method</div>
+                <div className="flex items-center space-x-2">
+                  {payment.paymentMethod.type === 'card' && (
+                    <>
+                      <CreditCard className="h-4 w-4 text-gray-400" />
+                      <span className="text-sm text-gray-900">Card ending in {payment.paymentMethod.details.slice(-4)}</span>
+                    </>
+                  )}
+                  {payment.paymentMethod.type === 'bank' && (
+                    <>
+                      <Building2 className="h-4 w-4 text-gray-400" />
+                      <span className="text-sm text-gray-900 font-mono">
+                        {payment.paymentMethod.details}
+                      </span>
+                    </>
+                  )}
+                  {payment.paymentMethod.type === 'crypto' && (
+                    <>
+                      <Bitcoin className="h-4 w-4 text-gray-400" />
+                      <span className="text-sm text-gray-900 font-mono">
+                        {`${payment.paymentMethod.details.slice(0, 6)}...${payment.paymentMethod.details.slice(-4)}`}
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              <div className="p-4 bg-gray-50 rounded-xl">
                 <div className="text-sm font-medium text-gray-500 mb-1">Merchant Order ID</div>
                 <div className="text-sm text-gray-900">{payment.merchantOrderId}</div>
               </div>
+
               <div className="p-4 bg-gray-50 rounded-xl">
                 <div className="text-sm font-medium text-gray-500 mb-1">System Transaction ID</div>
                 <div className="text-sm text-gray-900">{payment.systemTransactionId}</div>
               </div>
+
               <div className="p-4 bg-gray-50 rounded-xl">
                 <div className="text-sm font-medium text-gray-500 mb-1">Status</div>
                 <div className="mt-1">
@@ -143,15 +208,16 @@ const PaymentDetailsModal: React.FC<{
                       <span className="text-sm font-medium capitalize">Pending</span>
                     </div>
                   )}
-                  {payment.status === 'failed' && (
+                  {payment.status === 'error' && (
                     <div className="flex items-center space-x-2 text-red-600 bg-red-50 px-3 py-1 rounded-lg w-fit">
                       <AlertTriangle className="h-4 w-4" />
-                      <span className="text-sm font-medium capitalize">Failed</span>
+                      <span className="text-sm font-medium capitalize">Error</span>
                     </div>
                   )}
                 </div>
               </div>
             </div>
+
             <div className="space-y-4">
               <div className="p-4 bg-gray-50 rounded-xl">
                 <div className="text-sm font-medium text-gray-500 mb-1">Amount</div>
@@ -162,27 +228,28 @@ const PaymentDetailsModal: React.FC<{
                   })}
                 </div>
               </div>
+
               <div className="p-4 bg-gray-50 rounded-xl">
-                <div className="text-sm font-medium text-gray-500 mb-1">Gateway</div>
-                <div className="text-sm text-gray-900">{payment.gatewayName}</div>
+                <div className="text-sm font-medium text-gray-500 mb-1">Merchant</div>
+                <div className="text-sm text-gray-900">{payment.merchantName}</div>
               </div>
+
               <div className="p-4 bg-gray-50 rounded-xl">
                 <div className="text-sm font-medium text-gray-500 mb-1">Date</div>
                 <div className="text-sm text-gray-900">
                   {format(payment.date, 'PPpp')}
                 </div>
               </div>
-            </div>
-          </div>
 
-          <div className="space-y-4">
-            <div className="p-4 bg-gray-50 rounded-xl">
-              <div className="text-sm font-medium text-gray-500 mb-1">IP Address</div>
-              <div className="text-sm text-gray-900">{payment.ipAddress}</div>
-            </div>
-            <div className="p-4 bg-gray-50 rounded-xl">
-              <div className="text-sm font-medium text-gray-500 mb-1">Country of Origin</div>
-              <div className="text-sm text-gray-900">{payment.country}</div>
+              <div className="p-4 bg-gray-50 rounded-xl">
+                <div className="text-sm font-medium text-gray-500 mb-1">IP Address</div>
+                <div className="text-sm text-gray-900">{payment.ipAddress}</div>
+              </div>
+
+              <div className="p-4 bg-gray-50 rounded-xl">
+                <div className="text-sm font-medium text-gray-500 mb-1">Country</div>
+                <div className="text-sm text-gray-900">{payment.country}</div>
+              </div>
             </div>
           </div>
         </div>
@@ -204,7 +271,7 @@ const AdminPayments: React.FC = () => {
     { value: 'all', label: 'All Status' },
     { value: 'success', label: 'Success', icon: <CheckCircle2 className="h-4 w-4 text-green-600" /> },
     { value: 'pending', label: 'Pending', icon: <Clock className="h-4 w-4 text-yellow-600" /> },
-    { value: 'failed', label: 'Failed', icon: <AlertTriangle className="h-4 w-4 text-red-600" /> }
+    { value: 'error', label: 'Error', icon: <AlertTriangle className="h-4 w-4 text-red-600" /> }
   ];
 
   return (
@@ -365,15 +432,15 @@ const AdminPayments: React.FC = () => {
                         <span className="text-sm font-medium capitalize">Pending</span>
                       </div>
                     )}
-                    {payment.status === 'failed' && (
+                    {payment.status === 'error' && (
                       <div className="flex items-center space-x-2 text-red-600 bg-red-50 px-3 py-1 rounded-lg w-fit">
                         <AlertTriangle className="h-4 w-4" />
-                        <span className="text-sm font-medium capitalize">Failed</span>
+                        <span className="text-sm font-medium capitalize">Error</span>
                       </div>
                     )}
                   </td>
                   <td className="px-6 py-4">
-                    <span className="text-sm text-gray-900">{payment.gatewayName}</span>
+                    <span className="text-sm text-gray-900">{payment.paymentMethod.type}</span>
                   </td>
                   <td className="px-6 py-4">
                     <span className="text-sm font-medium text-gray-900">

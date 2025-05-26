@@ -43,6 +43,7 @@ import DatePicker from '../components/DatePicker';
 interface Transaction {
   id: string;
   date: Date;
+  name: string;
   email: string;
   type: 'payment' | 'refund' | 'deposit';
   amount: number;
@@ -54,7 +55,8 @@ const sampleTransactions: Transaction[] = [
   {
     id: 'TRX-001',
     date: new Date('2024-03-20'),
-    email: 'john@example.com',
+    name: 'John Smith',
+    email: 'john.smith@example.com',
     type: 'payment',
     amount: 1250.00,
     currency: 'USD',
@@ -63,7 +65,8 @@ const sampleTransactions: Transaction[] = [
   {
     id: 'TRX-002',
     date: new Date('2024-03-19'),
-    email: 'alice@example.com',
+    name: 'Alice Johnson',
+    email: 'alice.johnson@example.com',
     type: 'deposit',
     amount: 3000.00,
     currency: 'USD',
@@ -72,13 +75,21 @@ const sampleTransactions: Transaction[] = [
   {
     id: 'TRX-003',
     date: new Date('2024-03-18'),
-    email: 'bob@example.com',
+    name: 'Bob Wilson',
+    email: 'bob.wilson@example.com',
     type: 'refund',
     amount: 750.00,
     currency: 'USD',
     status: 'pending'
   }
 ];
+
+const truncateEmail = (email: string, maxLength: number = 20) => {
+  if (email.length <= maxLength) return email;
+  const [username, domain] = email.split('@');
+  const truncatedUsername = username.slice(0, maxLength - domain.length - 3);
+  return `${truncatedUsername}...@${domain}`;
+};
 
 const TransactionDetailsModal: React.FC<{
   transaction: Transaction;
@@ -128,6 +139,10 @@ const TransactionDetailsModal: React.FC<{
               <div className="p-4 bg-gray-50 rounded-xl">
                 <div className="text-sm font-medium text-gray-500 mb-1">Transaction ID</div>
                 <div className="text-sm text-gray-900 font-mono">{transaction.id}</div>
+              </div>
+              <div className="p-4 bg-gray-50 rounded-xl">
+                <div className="text-sm font-medium text-gray-500 mb-1">Name</div>
+                <div className="text-sm text-gray-900">{transaction.name}</div>
               </div>
               <div className="p-4 bg-gray-50 rounded-xl">
                 <div className="text-sm font-medium text-gray-500 mb-1">Email</div>
@@ -255,10 +270,13 @@ const Transactions: React.FC = () => {
           <span className="font-mono text-gray-600 hidden md:table-cell">{info.getValue()}</span>
         ),
       }),
-      columnHelper.accessor('email', {
-        header: 'Email',
+      columnHelper.accessor('name', {
+        header: 'Payer',
         cell: (info) => (
-          <span className="truncate max-w-[150px] block">{info.getValue()}</span>
+          <div>
+            <div className="text-sm font-medium text-gray-900">{info.getValue()}</div>
+            <div className="text-sm text-gray-500">{truncateEmail(info.row.original.email)}</div>
+          </div>
         ),
       }),
       columnHelper.accessor('type', {
@@ -363,7 +381,8 @@ const Transactions: React.FC = () => {
     return sampleTransactions.filter(transaction => {
       const matchesSearch = 
         transaction.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        transaction.id.toLowerCase().includes(searchTerm.toLowerCase());
+        transaction.id.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        transaction.name.toLowerCase().includes(searchTerm.toLowerCase());
       
       const matchesStatus = statusFilter === 'all' || transaction.status === statusFilter;
       const matchesType = typeFilter === 'all' || transaction.type === typeFilter;
@@ -387,7 +406,6 @@ const Transactions: React.FC = () => {
     getFilteredRowModel: getFilteredRowModel(),
   });
 
-  // Calculate totals
   const totalVolume = sampleTransactions.reduce((sum, t) => sum + t.amount, 0);
   const totalPayments = sampleTransactions.filter(t => t.type === 'payment').reduce((sum, t) => sum + t.amount, 0);
   const totalRefunds = sampleTransactions.filter(t => t.type === 'refund').reduce((sum, t) => sum + t.amount, 0);

@@ -1,89 +1,96 @@
-import React, { useState } from 'react';
-import { format } from 'date-fns';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect } from 'react';
 import {
   Search,
-  ArrowUpDown,
   Calendar,
-  Download,
-  Plus,
+  Filter,
+  ArrowUpDown,
   Eye,
   CheckCircle2,
   Clock,
-  AlertCircle,
   XCircle,
   ArrowDownLeft,
-  Wallet
+  AlertTriangle,
+  Download,
+  DollarSign,
+  Wallet,
+  Building2,
+  Bitcoin,
+  Plus,
+  User,
+  AlertCircle
 } from 'lucide-react';
+import { format } from 'date-fns';
+import { AnimatePresence, motion } from 'framer-motion';
 import DatePicker from '../components/DatePicker';
 import CustomSelect from '../components/CustomSelect';
 
-interface Payout {
-  id: string;
-  date: Date;
-  username: string;
-  amount: number;
-  currency: string;
-  walletAddress: string;
-  status: 'pending' | 'processing' | 'paid' | 'failed' | 'cancelled';
-}
-
-const samplePayouts: Payout[] = [
-  {
-    id: 'PO-001',
-    date: new Date('2024-03-20'),
-    username: 'johndoe',
-    amount: 5000.00,
-    currency: 'USD',
-    walletAddress: '0x1234...5678',
-    status: 'paid'
+// Sample users data
+const sampleUsers = [
+  { 
+    id: '1', 
+    name: 'John Doe', 
+    email: 'john@example.com',
+    balance: 15000.00,
+    availableForPayout: 12500.00,
+    wallets: {
+      'USDT TRC-20': 'TRx4d7a8b9c0...',
+      'USDT Polygon': '0x1234...',
+      'USDT Ethereum': '0x5678...',
+      'USDC Polygon': '0x9abc...'
+    }
   },
-  {
-    id: 'PO-002',
-    date: new Date('2024-03-19'),
-    username: 'alice_smith',
-    amount: 2500.00,
-    currency: 'USD',
-    walletAddress: '0x8765...4321',
-    status: 'processing'
-  },
-  {
-    id: 'PO-003',
-    date: new Date('2024-03-18'),
-    username: 'bob_wilson',
-    amount: 1000.00,
-    currency: 'USD',
-    walletAddress: '0x9876...5432',
-    status: 'pending'
+  { 
+    id: '2', 
+    name: 'Jane Smith', 
+    email: 'jane@example.com',
+    balance: 8000.00,
+    availableForPayout: 7500.00,
+    wallets: {
+      'USDT TRC-20': 'TRx1a2b3c4d...',
+      'USDT Polygon': '0xdef0...',
+      'USDC Polygon': '0x1a2b...'
+    }
   }
 ];
 
 interface CreatePayoutFormData {
-  username: string;
+  userId: string;
   amount: string;
-  currency: string;
-  walletAddress: string;
-  notes?: string;
+  network: string;
 }
+
+const networkOptions = [
+  { value: 'USDT TRC-20', label: 'USDT TRC-20' },
+  { value: 'USDT Polygon', label: 'USDT Polygon' },
+  { value: 'USDT Ethereum', label: 'USDT Ethereum' },
+  { value: 'USDC Polygon', label: 'USDC Polygon' }
+];
 
 const CreatePayoutModal: React.FC<{
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: CreatePayoutFormData) => void;
 }> = ({ isOpen, onClose, onSubmit }) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedUser, setSelectedUser] = useState<typeof sampleUsers[0] | null>(null);
   const [formData, setFormData] = useState<CreatePayoutFormData>({
-    username: '',
+    userId: '',
     amount: '',
-    currency: 'USD',
-    walletAddress: '',
-    notes: ''
+    network: 'USDT TRC-20'
   });
+  const [showUserDropdown, setShowUserDropdown] = useState(false);
 
-  const currencyOptions = [
-    { value: 'USD', label: 'USD' },
-    { value: 'EUR', label: 'EUR' },
-    { value: 'GBP', label: 'GBP' }
-  ];
+  const filteredUsers = sampleUsers.filter(user => 
+    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    user.email.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const handleUserSelect = (user: typeof sampleUsers[0]) => {
+    setSelectedUser(user);
+    setFormData(prev => ({ ...prev, userId: user.id }));
+    setShowUserDropdown(false);
+    setSearchTerm(`${user.name} (${user.email})`);
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -130,17 +137,87 @@ const CreatePayoutModal: React.FC<{
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Username
+                    Search User
                   </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.username}
-                    onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
-                    placeholder="Enter username"
+                  <div className="relative">
+                    <div className="relative">
+                      <input
+                        type="text"
+                        value={searchTerm}
+                        onChange={(e) => {
+                          setSearchTerm(e.target.value);
+                          setShowUserDropdown(true);
+                          setSelectedUser(null);
+                        }}
+                        onClick={() => setShowUserDropdown(true)}
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                        placeholder="Search by name or email"
+                      />
+                      <User className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    </div>
+                    
+                    {showUserDropdown && filteredUsers.length > 0 && (
+                      <div className="absolute z-10 w-full mt-1 bg-white rounded-lg shadow-lg border border-gray-200">
+                        {filteredUsers.map((user) => (
+                          <button
+                            key={user.id}
+                            type="button"
+                            onClick={() => handleUserSelect(user)}
+                            className="w-full px-4 py-2 text-left hover:bg-gray-50 flex items-center space-x-2"
+                          >
+                            <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
+                              <span className="text-sm font-medium text-primary">
+                                {user.name.split(' ').map(n => n[0]).join('')}
+                              </span>
+                            </div>
+                            <div>
+                              <div className="text-sm font-medium text-gray-900">{user.name}</div>
+                              <div className="text-sm text-gray-500">{user.email}</div>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {selectedUser && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <div className="text-sm font-medium text-gray-500 mb-1">Balance</div>
+                      <div className="text-lg font-semibold text-gray-900">
+                        ${selectedUser.balance.toLocaleString()}
+                      </div>
+                    </div>
+                    <div className="p-4 bg-gray-50 rounded-lg">
+                      <div className="text-sm font-medium text-gray-500 mb-1">Available for Payout</div>
+                      <div className="text-lg font-semibold text-green-600">
+                        ${selectedUser.availableForPayout.toLocaleString()}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Network
+                  </label>
+                  <CustomSelect
+                    value={formData.network}
+                    onChange={(value) => setFormData({ ...formData, network: value })}
+                    options={networkOptions}
+                    placeholder="Select network"
                   />
                 </div>
+
+                {selectedUser && formData.network && (
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    <div className="text-sm font-medium text-gray-700 mb-2">Wallet Address</div>
+                    <div className="font-mono text-sm text-gray-900">
+                      {selectedUser.wallets[formData.network as keyof typeof selectedUser.wallets] || 'No wallet set for this network'}
+                    </div>
+                  </div>
+                )}
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -149,50 +226,25 @@ const CreatePayoutModal: React.FC<{
                   <div className="relative">
                     <input
                       type="number"
-                      required
                       value={formData.amount}
                       onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                      className="w-full pl-4 pr-20 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                      className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary pr-16"
                       placeholder="0.00"
                       step="0.01"
+                      min="0"
+                      max={selectedUser?.availableForPayout}
                     />
-                    <div className="absolute inset-y-0 right-0 flex items-center">
-                      <CustomSelect
-                        value={formData.currency}
-                        onChange={(value) => setFormData({ ...formData, currency: value })}
-                        options={currencyOptions}
-                        placeholder="Currency"
-                        className="w-20"
-                      />
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-3">
+                      <span className="text-gray-500">
+                        {formData.network?.split(' ')[0] || 'USDT'}
+                      </span>
                     </div>
                   </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Wallet Address
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.walletAddress}
-                    onChange={(e) => setFormData({ ...formData, walletAddress: e.target.value })}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
-                    placeholder="Enter wallet address"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Notes (Optional)
-                  </label>
-                  <textarea
-                    value={formData.notes}
-                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none resize-none"
-                    rows={3}
-                    placeholder="Add any additional notes..."
-                  />
+                  {selectedUser && (
+                    <p className="mt-1 text-sm text-gray-500">
+                      Maximum amount: ${selectedUser.availableForPayout.toLocaleString()}
+                    </p>
+                  )}
                 </div>
               </div>
 
@@ -206,7 +258,8 @@ const CreatePayoutModal: React.FC<{
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark"
+                  disabled={!selectedUser || !formData.network || !formData.amount}
+                  className="px-4 py-2 bg-primary text-white text-sm font-medium rounded-lg hover:bg-primary-dark disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Create Payout
                 </button>
@@ -218,6 +271,66 @@ const CreatePayoutModal: React.FC<{
     </AnimatePresence>
   );
 };
+
+interface Payout {
+  id: string;
+  date: Date;
+  username: string;
+  amount: number;
+  currency: string;
+  walletAddress: string;
+  status: 'pending' | 'processing' | 'paid' | 'failed' | 'cancelled';
+  fee: number;
+  method: {
+    type: 'bank' | 'card' | 'crypto';
+    details: string;
+  };
+}
+
+const samplePayouts: Payout[] = [
+  {
+    id: 'PO-001',
+    date: new Date('2024-03-20'),
+    username: 'johndoe',
+    amount: 5000.00,
+    currency: 'USD',
+    walletAddress: '0x1234...5678',
+    status: 'paid',
+    fee: 25.00,
+    method: {
+      type: 'crypto',
+      details: 'USDT TRC-20'
+    }
+  },
+  {
+    id: 'PO-002',
+    date: new Date('2024-03-19'),
+    username: 'alice_smith',
+    amount: 2500.00,
+    currency: 'USD',
+    walletAddress: '0x8765...4321',
+    status: 'processing',
+    fee: 12.50,
+    method: {
+      type: 'crypto',
+      details: 'USDT Polygon'
+    }
+  },
+  {
+    id: 'PO-003',
+    date: new Date('2024-03-18'),
+    username: 'bob_wilson',
+    amount: 1000.00,
+    currency: 'USD',
+    walletAddress: '0x9876...5432',
+    status: 'pending',
+    fee: 5.00,
+    method: {
+      type: 'crypto',
+      details: 'USDC Polygon'
+    }
+  }
+];
 
 const PayoutDetailsModal: React.FC<{
   payout: Payout;
@@ -263,14 +376,6 @@ const PayoutDetailsModal: React.FC<{
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-4">
               <div className="p-4 bg-gray-50 rounded-xl">
-                <div className="text-sm font-medium text-gray-500 mb-1">Username</div>
-                <div className="text-sm text-gray-900">{payout.username}</div>
-              </div>
-              <div className="p-4 bg-gray-50 rounded-xl">
-                <div className="text-sm font-medium text-gray-500 mb-1">Wallet Address</div>
-                <div className="text-sm font-mono text-gray-900">{payout.walletAddress}</div>
-              </div>
-              <div className="p-4 bg-gray-50 rounded-xl">
                 <div className="text-sm font-medium text-gray-500 mb-1">Status</div>
                 <div className="mt-1">
                   {payout.status === 'paid' && (
@@ -305,6 +410,14 @@ const PayoutDetailsModal: React.FC<{
                   )}
                 </div>
               </div>
+              <div className="p-4 bg-gray-50 rounded-xl">
+                <div className="text-sm font-medium text-gray-500 mb-1">Method</div>
+                <div className="flex items-center space-x-2">
+                  {payout.method.type === 'bank' && <Building2 className="h-4 w-4 text-gray-400" />}
+                  {payout.method.type === 'crypto' && <Bitcoin className="h-4 w-4 text-gray-400" />}
+                  <span className="text-sm text-gray-900">{payout.method.details}</span>
+                </div>
+              </div>
             </div>
             <div className="space-y-4">
               <div className="p-4 bg-gray-50 rounded-xl">
@@ -317,9 +430,21 @@ const PayoutDetailsModal: React.FC<{
                 </div>
               </div>
               <div className="p-4 bg-gray-50 rounded-xl">
-                <div className="text-sm font-medium text-gray-500 mb-1">Date</div>
-                <div className="text-sm text-gray-900">
-                  {format(payout.date, 'PPpp')}
+                <div className="text-sm font-medium text-gray-500 mb-1">Fee</div>
+                <div className="text-lg font-medium text-gray-900">
+                  {payout.fee.toLocaleString('en-US', {
+                    style: 'currency',
+                    currency: payout.currency,
+                  })}
+                </div>
+              </div>
+              <div className="p-4 bg-gray-50 rounded-xl">
+                <div className="text-sm font-medium text-gray-500 mb-1">Net Amount</div>
+                <div className="text-lg font-medium text-gray-900">
+                  {(payout.amount - payout.fee).toLocaleString('en-US', {
+                    style: 'currency',
+                    currency: payout.currency,
+                  })}
                 </div>
               </div>
             </div>
@@ -351,14 +476,20 @@ const AdminPayouts: React.FC = () => {
   ];
 
   const handleCreatePayout = (data: CreatePayoutFormData) => {
+    const selectedUser = sampleUsers.find(u => u.id === data.userId);
     const newPayout: Payout = {
       id: `PO-${Math.random().toString(36).substr(2, 9)}`,
       date: new Date(),
-      username: data.username,
+      username: selectedUser?.name || '',
       amount: parseFloat(data.amount),
-      currency: data.currency,
-      walletAddress: data.walletAddress,
-      status: 'pending'
+      currency: data.network.split(' ')[0],
+      walletAddress: selectedUser?.wallets[data.network] || '',
+      status: 'pending',
+      fee: parseFloat(data.amount) * 0.005, // 0.5% fee
+      method: {
+        type: 'crypto',
+        details: data.network
+      }
     };
 
     setPayouts([newPayout, ...payouts]);
@@ -542,9 +673,6 @@ const AdminPayouts: React.FC = () => {
                   </button>
                 </th>
                 <th className="text-left px-6 py-4">
-                  <span className="text-sm font-medium text-gray-500">Username</span>
-                </th>
-                <th className="text-left px-6 py-4">
                   <button className="flex items-center space-x-2 text-sm font-medium text-gray-500">
                     <span>Amount</span>
                     <ArrowUpDown className="h-4 w-4" />
@@ -554,7 +682,7 @@ const AdminPayouts: React.FC = () => {
                   <span className="text-sm font-medium text-gray-500">Status</span>
                 </th>
                 <th className="text-left px-6 py-4">
-                  <span className="text-sm font-medium text-gray-500">Wallet Address</span>
+                  <span className="text-sm font-medium text-gray-500">Fee</span>
                 </th>
                 <th className="text-right px-6 py-4"></th>
               </tr>
@@ -566,9 +694,6 @@ const AdminPayouts: React.FC = () => {
                     <span className="text-sm text-gray-500">
                       {format(payout.date, 'MMM d, yyyy')}
                     </span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="text-sm text-gray-900">{payout.username}</span>
                   </td>
                   <td className="px-6 py-4">
                     <span className="text-sm font-medium text-gray-900">
@@ -608,7 +733,7 @@ const AdminPayouts: React.FC = () => {
                     )}
                   </td>
                   <td className="px-6 py-4">
-                    <span className="text-sm font-mono text-gray-500">{payout.walletAddress}</span>
+                    <span className="text-sm text-gray-500">${payout.fee.toFixed(2)}</span>
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center justify-end space-x-2">

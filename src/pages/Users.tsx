@@ -1,5 +1,37 @@
 import React, { useState } from 'react';
-import { Search, Filter, Calendar, ArrowUpDown, Eye, CheckCircle2, XCircle, Clock, Download, DollarSign, TrendingUp, ArrowUpRight, AlertTriangle, Globe, MoreHorizontal, Plus, Lock, User as UserIcon, Mail, Phone, Settings, Key, GitBranch as BrandTelegram, Percent, Copy, Check, X, EyeOff, RefreshCw, Ban } from 'lucide-react';
+import {
+  Search,
+  Calendar,
+  Filter,
+  ArrowUpDown,
+  Eye,
+  CheckCircle2,
+  XCircle,
+  Clock,
+  Download,
+  DollarSign,
+  TrendingUp,
+  ArrowUpRight,
+  AlertTriangle,
+  Globe,
+  MoreHorizontal,
+  Plus,
+  Lock,
+  User as UserIcon,
+  Mail,
+  Phone,
+  Settings,
+  Key,
+  GitBranch as BrandTelegram,
+  Percent,
+  Copy,
+  Check,
+  X,
+  EyeOff,
+  RefreshCw,
+  Ban,
+  Link as LinkIcon
+} from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import CustomSelect from '../components/CustomSelect';
 import { format } from 'date-fns';
@@ -14,6 +46,7 @@ interface User {
   joinDate: Date;
   lastActive: Date;
   telegramId?: string;
+  merchantUrl?: string;
   commission: {
     rate: number;
     enabled: boolean;
@@ -37,6 +70,7 @@ const sampleUsers: User[] = [
     joinDate: new Date('2024-01-15'),
     lastActive: new Date('2024-03-10T14:30:00'),
     telegramId: '@johndoe',
+    merchantUrl: 'https://store.johndoe.com',
     commission: {
       rate: 0.5,
       enabled: true
@@ -57,6 +91,7 @@ const sampleUsers: User[] = [
     balance: 500.75,
     joinDate: new Date('2024-02-20'),
     lastActive: new Date('2024-03-09T09:15:00'),
+    merchantUrl: 'https://janesmith.store',
     commission: {
       rate: 0.3,
       enabled: true
@@ -70,6 +105,7 @@ interface AddUserFormData {
   fullName: string;
   username: string;
   telegramId?: string;
+  merchantUrl?: string;
   commission: number;
   gateways: string[];
 }
@@ -84,6 +120,7 @@ const CreateUserModal: React.FC<{
     fullName: '',
     username: '',
     telegramId: '',
+    merchantUrl: '',
     commission: 0.5,
     gateways: []
   });
@@ -177,6 +214,19 @@ const CreateUserModal: React.FC<{
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Merchant URL
+                  </label>
+                  <input
+                    type="url"
+                    value={formData.merchantUrl}
+                    onChange={(e) => setFormData({ ...formData, merchantUrl: e.target.value })}
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
+                    placeholder="https://example.com"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
                     Telegram ID (Optional)
                   </label>
                   <input
@@ -237,6 +287,7 @@ const UserDetailsModal: React.FC<{
     name: user.name,
     username: user.username,
     telegramId: user.telegramId || '',
+    merchantUrl: user.merchantUrl || '',
     commission: user.commission.rate,
     gateways: user.gateways
   });
@@ -256,6 +307,7 @@ const UserDetailsModal: React.FC<{
       name: formData.name,
       username: formData.username,
       telegramId: formData.telegramId,
+      merchantUrl: formData.merchantUrl,
       commission: {
         ...user.commission,
         rate: formData.commission
@@ -372,6 +424,33 @@ const UserDetailsModal: React.FC<{
                   Email
                 </label>
                 <div className="text-sm text-gray-900">{user.email}</div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Merchant URL
+                </label>
+                {editMode ? (
+                  <input
+                    type="url"
+                    value={formData.merchantUrl}
+                    onChange={(e) => setFormData({ ...formData, merchantUrl: e.target.value })}
+                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary"
+                    placeholder="https://example.com"
+                  />
+                ) : (
+                  <div className="flex items-center space-x-2">
+                    <LinkIcon className="h-4 w-4 text-gray-400" />
+                    <a 
+                      href={user.merchantUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-sm text-primary hover:underline"
+                    >
+                      {user.merchantUrl || 'Not set'}
+                    </a>
+                  </div>
+                )}
               </div>
 
               <div>
@@ -728,6 +807,7 @@ const Users: React.FC = () => {
       joinDate: new Date(),
       lastActive: new Date(),
       telegramId: data.telegramId,
+      merchantUrl: data.merchantUrl,
       commission: {
         rate: data.commission,
         enabled: true

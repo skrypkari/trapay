@@ -197,10 +197,6 @@ const Login: React.FC = () => {
             <div className="flex items-center space-x-2 my-4">
               <img src="/logo.webp" alt="TRAPAY" className="h-8" />
             </div>
-            <p className="text-sm text-gray-400">
-              TRAPAY LIMITED, Company number: 11741864, 37th Floor, Office 37.38,<br />
-              1 Canada Square, London, E14 5AA, UNITED KINGDOM
-            </p>
             <div className="flex items-center space-x-4 text-sm text-gray-400">
               <a href="#" className="hover:text-white transition-colors duration-200">Privacy Policy</a>
               <span>•</span>
